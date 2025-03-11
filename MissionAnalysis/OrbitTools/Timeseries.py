@@ -29,6 +29,13 @@ class Timeseries(object):
         else:
             raise ValueError("Time not found in the time vector")
 
+    def get_data_at_index(self, idx):
+        """Get the data at a specific time"""
+        if idx < len(self.time):
+            return self.time[idx], self.data[idx]
+        else:
+            raise ValueError("Index out of bounds")
+
 if __name__ == "__main__":
     # Example usage
     ts = Timeseries()

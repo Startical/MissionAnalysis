@@ -23,7 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MissionAnalysis.py" />
-    <Compile Include="ConstellationDesign.py">
+    <Compile Include="Model\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OrbitTools\Timeseries.py" />
@@ -36,12 +36,19 @@
     <Compile Include="OrbitTools\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Spacecraft.py">
+    <Compile Include="Scripts\ConstellationCoverageAnalysis.py" />
+    <Compile Include="Scripts\ParametricAnalysis.py" />
+    <Compile Include="Scripts\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Model\Spacecraft.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Model\" />
     <Folder Include="OrbitTools\" />
+    <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|VisualStudio|python-3.13.2" />

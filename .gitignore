@@ -6,6 +6,9 @@ __pycache__/
 # Visual Studio
 .vs/*
 
+# results
+*/results/*
+
 # C extensions
 *.so
 

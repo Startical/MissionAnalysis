@@ -68,8 +68,6 @@ class FrameTransformations(object):
         theta = np.arctan2(xyz[1],xyz[0])
         return r,theta,phi
 
-
-
     def eccentricAnomalyFromTrueAnomaly(ecc,ta):
         """This method calculates the eccentric anomaly from the true anomaly"""
         E = 2*np.arctan(np.tan(ta/2)/np.sqrt((1+ecc)/(1-ecc)))
