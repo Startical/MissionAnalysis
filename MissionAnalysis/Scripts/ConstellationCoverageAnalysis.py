@@ -2,6 +2,7 @@ from Model.ConstellationDesign import Constellation
 import numpy as np
 import os
 import webbrowser
+import pandas as pd
 
 
 from matplotlib import pyplot as plt
@@ -18,16 +19,23 @@ def evaluate_constellations(constellations):
 
     constellation_reports = ''
     constellation_definitions = ''
+    all_tables = []
 
     for constellation in constellations:
         print(f'Running analysis: {constellation.idFullContext()}')
         constellation.initializeSpacecraft()
 
         fig1 = constellation.plot_constellation_groundTrack()
-        fig2 = constellation.plot_constellation_coverage()
+        fig2, table = constellation.plot_constellation_coverage()
 
         fig1.savefig(f'{figs_folder}/{fig1.name}.png')
         fig2.savefig(f'{figs_folder}/{fig2.name}.png')
+
+        # Set the index of the table to the constellation identifier
+        table.index = [f'{constellation.id}']
+
+        # Collect all tables
+        all_tables.append(table)
 
         # report
         constellation_params = f'''
@@ -62,8 +70,12 @@ def evaluate_constellations(constellations):
                 <img src=constellations/{fig1.name}.png width="700">
                 <p>Coverage analysis at FL{constellation.H/3*100:.0f}</p>
                 <img src=constellations/{fig2.name}.png width="700">
+                <p>Satellites visible at FL{constellation.H/3*100:.0f}</p>
+                {table.to_html()}
         '''
-    
+
+    # Concatenate all tables
+    concatenated_table = pd.concat(all_tables)
 
     # create the report
     style, script = reportStyle()
@@ -97,6 +109,8 @@ def evaluate_constellations(constellations):
             </tbody>
             </table>
             {constellation_reports}
+            <h2>Final summary</h2>
+            {concatenated_table.to_html()}
             {script}
         </body>
     </html>

@@ -13,6 +13,8 @@ from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColor
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
+import pandas as pd
+
 from OrbitTools.FrameTransformations import FrameTransformations as frames
 
 
@@ -133,17 +135,29 @@ class Constellation(object):
     
     def plot_constellation_coverage(self):
         H = self.H
+        TOTAL_AREA = 4*np.pi*((EARTH_RADIUS+H)**2)
     
-        delta = np.pi/50
-        long = np.arange(0,2*np.pi+delta, delta)
-        lat = np.arange(-np.pi/2, np.pi/2+delta, delta)
+        deltaLong = np.pi/50
+        long = np.arange(0,2*np.pi+deltaLong, deltaLong)
+        deltaLat = np.pi/50
+        lat = np.arange(-np.pi/2, np.pi/2+deltaLat,deltaLat)
     
         long_grid, lat_grid = np.meshgrid(long, lat)
         n = np.zeros_like(long_grid)
+
+        # Define contour levels
+        levels = np.arange(0,6,1)
+
+        # area placeholder
+        area = np.zeros(len(levels))
     
         for i in range(len(long)): 
             for j in range(len(lat)):
+
+                # area element
+                da = ((EARTH_RADIUS+H)**2)*np.cos(lat[j])*deltaLong*deltaLat
     
+                # point position
                 xyz_P = frames.spherical2cartesian(EARTH_RADIUS + H, long[i], lat[j]);
                 R = np.linalg.norm(xyz_P)
                 u_P = xyz_P/R
@@ -162,11 +176,12 @@ class Constellation(object):
                         if (angle_u_v(-u_SAT, -u_P_SAT)< self.antenna_aperture):
                             n[j,i] = n[j,i]+1
         
+                idx = int(min(n[j,i],len(area)-1))
+                area[idx] = area[idx]+da/TOTAL_AREA
+
         fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
     
-        # Define contour levels
-        levels = np.arange(0,6,1)
-        levels = np.append(levels, np.max(n))
+        levels1 = np.append(levels, np.max(n))
     
         # Create a custom colormap
         coolwarm = plt.get_cmap('coolwarm')
@@ -175,7 +190,7 @@ class Constellation(object):
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
     
         # Plot coverage as contour
-        contour = ax.contourf(long_grid*180/np.pi, lat_grid*180/np.pi, n, levels=levels, cmap=cmap, norm=norm)
+        contour = ax.contourf(long_grid*180/np.pi, lat_grid*180/np.pi, n, levels=levels1, cmap=cmap, norm=norm)
     
         # Add coastlines and borders
         ax.coastlines()
@@ -193,7 +208,13 @@ class Constellation(object):
         plt.title(f'Constellation coverage: {self.h} km, {self.inc*180/np.pi:.0f} deg, {self.m} x {self.n} , walker {self.walker_option}')
         fig.name = f'{self.idFullContext()}_fig2'
 
-        return fig;
+        index_names = ['% area covered']
+        column_names = [f'{idx}' for idx in levels]  # String array for column names
+        column_names[-1] = '>'+column_names[-1]
+
+        table = pd.DataFrame([[f'{a*100:.1f} %' for a in area]], index=index_names, columns=column_names)
+
+        return fig, table
 
 def angle_u_v(u,v):
     u_unit = u/np.linalg.norm(u)
