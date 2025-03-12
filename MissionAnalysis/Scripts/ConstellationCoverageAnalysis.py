@@ -4,9 +4,6 @@ import os
 import webbrowser
 import pandas as pd
 
-
-from matplotlib import pyplot as plt
-
 def evaluate_constellations(constellations):
     
     # Create the results folder if it does not exist
@@ -25,11 +22,9 @@ def evaluate_constellations(constellations):
         print(f'Running analysis: {constellation.idFullContext()}')
         constellation.initializeSpacecraft()
 
-        fig1 = constellation.plot_constellation_groundTrack()
-        fig2, table = constellation.plot_constellation_coverage()
-
-        fig1.savefig(f'{figs_folder}/{fig1.name}.png')
-        fig2.savefig(f'{figs_folder}/{fig2.name}.png')
+        fig0_name = constellation.plot_constellation3D(save_fig=True, save_folder=figs_folder)
+        fig1_name = constellation.plot_constellation_groundTrack(save_fig=True, save_folder=figs_folder)
+        fig2_name, table = constellation.plot_constellation_coverage(save_fig=True, save_folder=figs_folder)
 
         # Set the index of the table to the constellation identifier
         table.index = [f'{constellation.id}']
@@ -67,9 +62,21 @@ def evaluate_constellations(constellations):
                 </tbody>
                 </table>
                 <p>Geometrical aspect of the constellation</p>
-                <img src=constellations/{fig1.name}.png width="700">
+                <div style="display: inline-block; text-align: center;">
+                    <img src=constellations/{fig0_name}.png alt="Big Figure" width="700">
+                </div>
+                <div style="display: inline-block; text-align: center;">
+                    <div>
+                        <img src=constellations/{fig0_name}_XY.png alt="Small Figure 1" width="350">
+                    </div>
+                    <div>
+                        <img src=constellations/{fig0_name}_YZ.png alt="Small Figure 2" width="350">
+                    </div>
+                </div>
+                <p></p>
+                <img src=constellations/{fig1_name}.png width="700">
                 <p>Coverage analysis at FL{constellation.H/3*100:.0f}</p>
-                <img src=constellations/{fig2.name}.png width="700">
+                <img src=constellations/{fig2_name}.png width="700">
                 <p>Satellites visible at FL{constellation.H/3*100:.0f}</p>
                 {table.to_html()}
         '''

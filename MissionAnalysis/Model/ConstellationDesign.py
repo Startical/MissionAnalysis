@@ -1,14 +1,16 @@
-from encodings import mac_farsi
 from Model.Spacecraft import Spacecraft
 from OrbitTools.Constants import EARTH_RADIUS
+from Scripts.ParametricAnalysis import antenna_swath
+
 import numpy as np
 import matplotlib
 matplotlib.use('Qt5Agg')  # or 'Qt5Agg' if you prefer
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Ellipse
 from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColormap
+from mpl_toolkits.mplot3d import Axes3D
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -17,6 +19,7 @@ import pandas as pd
 
 from OrbitTools.FrameTransformations import FrameTransformations as frames
 
+import vtk
 
 class Constellation(object):
     """Constellation class"""
@@ -87,7 +90,256 @@ class Constellation(object):
                 newSC.propagate(newSC.get_orbitalPeriod(),newSC.get_orbitalPeriod()/20)
                 self.spacecraft.append(newSC)
 
-    def plot_constellation_groundTrack(self):
+    def plot_constellation3D(self, save_fig = False, save_folder = '', enable_interaction = False):
+        """Plot the Constellation 3D geometry"""
+
+        # Create a sphere source to represent the Earth
+        earthSource = vtk.vtkSphereSource()
+        earthSource.SetRadius(EARTH_RADIUS)
+        earthSource.SetThetaResolution(100)
+        earthSource.SetPhiResolution(100)
+
+        # Create a mapper and actor for the Earth
+        earthMapper = vtk.vtkPolyDataMapper()
+        earthMapper.SetInputConnection(earthSource.GetOutputPort())
+        earthActor = vtk.vtkActor()
+        earthActor.GetProperty().SetColor(0.5, 0.5, 0.5)  # Grey color
+        earthActor.SetMapper(earthMapper)
+
+        # Create a renderer
+        renderer = vtk.vtkRenderer()
+        
+        # Add the Earth actor to the scene
+        renderer.AddActor(earthActor)
+
+        # Create axes
+        axes = vtk.vtkAxesActor()
+        axes.SetTotalLength(2 * EARTH_RADIUS, 2 * EARTH_RADIUS, 2 * EARTH_RADIUS)  # Set the length of the axes
+        axes.SetShaftTypeToCylinder()  # Optional: Set the shaft type
+        axes.SetCylinderRadius(0.02)  # Optional: Set the radius of the cylinder
+        axes.SetConeRadius(0.1)  # Optional: Set the radius of the cone
+        axes.SetSphereRadius(0.1)  # Optional: Set the radius of the sphere
+
+        # Set the color of the axes to black
+        axes.GetXAxisShaftProperty().SetColor(0, 0, 0)
+        axes.GetYAxisShaftProperty().SetColor(0, 0, 0)
+        axes.GetZAxisShaftProperty().SetColor(0, 0, 0)
+        axes.GetXAxisTipProperty().SetColor(0, 0, 0)
+        axes.GetYAxisTipProperty().SetColor(0, 0, 0)
+        axes.GetZAxisTipProperty().SetColor(0, 0, 0)
+        
+        # Set the label text properties to smaller size
+        axes.GetXAxisCaptionActor2D().GetCaptionTextProperty().SetFontSize(1)
+        axes.GetYAxisCaptionActor2D().GetCaptionTextProperty().SetFontSize(1)
+        axes.GetZAxisCaptionActor2D().GetCaptionTextProperty().SetFontSize(1)
+
+        # Add the axes to the renderer
+        renderer.AddActor(axes)
+
+        # Define a colormap
+        colormap = cm.get_cmap('viridis', self.m)
+
+        # Plot satellites
+        x_plane = []
+        y_plane = []
+        z_plane = []
+
+        # Create satellite line and points
+        satellite_lines = []
+        satellite_points = []
+
+        for sc in self.spacecraft:
+            xyz = sc.xyz.get_data_at_time(0)
+            dt, xyz1 = sc.xyz.get_data_at_index(1)
+
+            dxyz = (xyz1-xyz)/np.linalg.norm((xyz1-xyz))
+
+            i_index = int(sc.id.split('_(')[1].split(',')[0])  # Extract the i index from the spacecraft ID
+            j_index = int(sc.id.split('_(')[1].split(',')[1].split(')')[0])  # Extract the j index from the spacecraft ID
+
+            color = colormap(i_index / self.m)  # Get the color from the colormap
+            color_r, color_g, color_b, _ = color
+
+
+            # Create a sphere source to represent the satellite
+            satelliteSource = vtk.vtkSphereSource()
+            satelliteSource.SetRadius(100)
+            satelliteSource.SetCenter(xyz[0], xyz[1], xyz[2])
+
+            # Create a mapper and actor for the satellite
+            satelliteMapper = vtk.vtkPolyDataMapper()
+            satelliteMapper.SetInputConnection(satelliteSource.GetOutputPort())
+            satelliteActor = vtk.vtkActor()
+            satelliteActor.GetProperty().SetColor(color_r, color_g, color_b)
+            satelliteActor.SetMapper(satelliteMapper)
+
+            # Add the satellite actor to the scene
+            renderer.AddActor(satelliteActor)
+
+            # Create an arrow source to represent the direction
+            arrowSource = vtk.vtkArrowSource()
+            arrowSource.SetTipLength(0.1)
+            arrowSource.SetTipRadius(0.05)
+            arrowSource.SetShaftRadius(0.02)
+
+            # Create a transform to position the arrow
+            transform = vtk.vtkTransform()
+            transform.Translate(xyz[0], xyz[1], xyz[2])
+            
+            velocity_vector = dxyz / np.linalg.norm(dxyz)
+            default_arrow = np.array([1, 0, 0])
+            rotation_axis = np.cross(default_arrow, velocity_vector)
+            rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+            rotation_angle = np.degrees(np.arccos(np.dot(default_arrow, velocity_vector)))
+            
+            transform.RotateWXYZ(rotation_angle, rotation_axis[0], rotation_axis[1], rotation_axis[2])
+            transform.Scale(1000, 1000, 1000)  # Set the arrow length
+
+            # Create a transform filter
+            transformFilter = vtk.vtkTransformPolyDataFilter()
+            transformFilter.SetTransform(transform)
+            transformFilter.SetInputConnection(arrowSource.GetOutputPort())
+            transformFilter.Update()
+
+            # Create a mapper and actor for the arrow
+            arrowMapper = vtk.vtkPolyDataMapper()
+            arrowMapper.SetInputConnection(transformFilter.GetOutputPort())
+            arrowActor = vtk.vtkActor()
+            arrowActor.GetProperty().SetColor(color_r, color_g, color_b)
+            arrowActor.SetMapper(arrowMapper)
+
+            # Add the arrow actor to the scene
+            renderer.AddActor(arrowActor)
+
+            # Create a circle to represent the antenna coverage
+            r,long,lat = frames.cartesian2spherical(xyz)
+            alpha, c = antenna_swath(self.h, self.H, self.antenna_aperture)
+            R = (r-(EARTH_RADIUS+self.H)*np.cos(alpha))*np.tan(self.antenna_aperture)
+            XYZ = frames.spherical2cartesian(EARTH_RADIUS+self.H, long, lat)
+
+            circleSource = vtk.vtkRegularPolygonSource()
+            circleSource.SetNumberOfSides(100)  # Higher number for smoother circle
+            circleSource.SetRadius(R)
+            circleSource.SetCenter(0, 0, 0)
+
+            # Create a transform to position the circle
+            transform2 = vtk.vtkTransform()
+            transform2.Translate(XYZ[0], XYZ[1], XYZ[2])
+            
+            normal_vector = xyz / np.linalg.norm(xyz)
+            default_normal = np.array([0, 0, 1])
+            rotation_axis = np.cross(default_normal, normal_vector)
+            rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+            rotation_angle = np.degrees(np.arccos(np.dot(default_normal, normal_vector)))
+
+            transform2.RotateWXYZ(rotation_angle, rotation_axis[0], rotation_axis[1], rotation_axis[2])
+
+            # Create a transform filter
+            transformFilter2 = vtk.vtkTransformPolyDataFilter()
+            transformFilter2.SetTransform(transform2)
+            transformFilter2.SetInputConnection(circleSource.GetOutputPort())
+            transformFilter2.Update()
+
+            # Create a mapper
+            circleMapper = vtk.vtkPolyDataMapper()
+            circleMapper.SetInputConnection(transformFilter2.GetOutputPort())
+            
+            # Create an actor
+            circleActor = vtk.vtkActor()
+            circleActor.SetMapper(circleMapper)
+            
+            # Set color and transparency
+            circleActor.GetProperty().SetColor(color_r, color_g, color_b)
+            circleActor.GetProperty().SetOpacity(0.2)  # 50% transparency
+
+            # Add the arrow actor to the scene
+            renderer.AddActor(circleActor)
+
+
+        # Add a title using vtkTextActor
+        title = vtk.vtkTextActor()
+        title.SetInput(f'{self.id}\n{self.h} km, {self.inc*180/np.pi:.0f} deg\n{self.m} x {self.n} , walker {self.walker_option}')
+        title.GetTextProperty().SetFontSize(24)
+        title.GetTextProperty().SetColor(0.0, 0.0, 0.0)  # Black color
+        title.SetPosition(10, 450)  # Position the title (x, y)
+
+        renderer.AddActor(title)
+
+        # Set the background color and camera position
+        renderer.SetBackground(1, 1, 1)  # White background
+        camera = renderer.GetActiveCamera()
+        camera.SetPosition(4 * EARTH_RADIUS, 4 * EARTH_RADIUS, 4 * EARTH_RADIUS)
+        camera.SetFocalPoint(0, 0, 0)
+        camera.SetViewUp(0,0,1)  # Optional: Set the view up vector
+        camera.Zoom(1)  # Optional: Zoom in or out
+
+        # render window, and interactor
+        renderWindow = vtk.vtkRenderWindow()
+        renderWindow.AddRenderer(renderer)
+        
+        # Set the size of the render window
+        renderWindow.SetSize(800, 800)  # Width, Height
+
+        renderWindowInteractor = vtk.vtkRenderWindowInteractor()
+        renderWindowInteractor.SetRenderWindow(renderWindow)
+        renderWindowInteractor.Initialize()
+
+        # Render the scene
+        renderWindow.Render()
+        renderer.ResetCamera()
+        renderWindow.Render()
+        
+        if save_fig:
+
+            fig_name = f'{self.idFullContext()}_3D'
+
+            # Export the scene as an image
+            windowToImageFilter = vtk.vtkWindowToImageFilter()
+            windowToImageFilter.SetInput(renderWindow)
+            windowToImageFilter.Update()
+
+            writer = vtk.vtkPNGWriter()
+            writer.SetFileName(f'{save_folder}/{fig_name}.png')
+            writer.SetInputConnection(windowToImageFilter.GetOutputPort())
+            writer.Write()
+
+            ## change camera position - View from Z
+            camera.SetPosition(0,0, 4 * EARTH_RADIUS)
+            camera.SetViewUp(0,1,0)  # Optional: Set the view up vector
+            
+            renderWindow.Render()
+            renderer.ResetCamera()
+            renderWindow.Render()
+            windowToImageFilter2 = vtk.vtkWindowToImageFilter()
+            windowToImageFilter2.SetInput(renderWindow)
+            windowToImageFilter2.Update()
+            writer.SetFileName(f'{save_folder}/{fig_name}_XY.png')
+            writer.SetInputConnection(windowToImageFilter2.GetOutputPort())
+            writer.Write()
+
+            ## change camera position - View from X
+            camera.SetPosition(4 * EARTH_RADIUS, 0, 0)
+            camera.SetViewUp(0,0,1)  # Optional: Set the view up vector
+            
+            renderWindow.Render()
+            renderer.ResetCamera()
+            renderWindow.Render()
+            windowToImageFilter3 = vtk.vtkWindowToImageFilter()
+            windowToImageFilter3.SetInput(renderWindow)
+            windowToImageFilter3.Update()
+            writer.SetFileName(f'{save_folder}/{fig_name}_YZ.png')
+            writer.SetInputConnection(windowToImageFilter3.GetOutputPort())
+            writer.Write()
+
+
+        if enable_interaction:
+            # this will block the execution of the script until the user closes the window
+            renderWindowInteractor.Start()
+
+        return fig_name
+
+
+    def plot_constellation_groundTrack(self, save_fig = False, save_folder = '', enable_interaction = False):
         """Plot the Earth in longitude/latitude coordinates"""
         
         fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={'projection': ccrs.PlateCarree()})
@@ -105,6 +357,7 @@ class Constellation(object):
         colormap = cm.get_cmap('viridis', self.m)
     
         # Plot satellites
+       
         for sc in self.spacecraft:
             xyz = sc.xyz.get_data_at_time(0)
             dt, xyz1 = sc.xyz.get_data_at_index(1)
@@ -113,8 +366,11 @@ class Constellation(object):
             R1, long1, lat1 = frames.cartesian2spherical(xyz1)
     
             i_index = int(sc.id.split('_(')[1].split(',')[0])  # Extract the i index from the spacecraft ID
+            j_index = int(sc.id.split('_(')[1].split(',')[1].split(')')[0])  # Extract the j index from the spacecraft ID
+            
             color = colormap(i_index / self.m)  # Get the color from the colormap
             
+            # Plot each satellite
             ax.scatter(long*180/np.pi, lat*180/np.pi, color=color, s=10, transform=ccrs.PlateCarree())
             ax.text(long*180/np.pi, lat*180/np.pi, sc.id, fontsize=4, verticalalignment='bottom')
             arrow_length = 5
@@ -122,18 +378,32 @@ class Constellation(object):
             dlat = lat1-lat
             ax.arrow(long * 180 / np.pi, lat * 180 / np.pi, dlong/np.linalg.norm([dlong,dlat]) * arrow_length, dlat/np.linalg.norm([dlong,dlat])  * arrow_length, color=color, head_width=1, head_length=2, transform=ccrs.PlateCarree())
     
-            # Add a disk (circle) centered on each point
-            r = self.antenna_swath()*180/np.pi;
-            circle = Circle((long*180/np.pi, lat*180/np.pi), radius=r, color=color, alpha=0.2, transform=ccrs.PlateCarree())
-            ax.add_patch(circle)
+            # Add a disk (ellipse to consider the 2D projection) centered on each point
+            alpha, c = antenna_swath(self.h, self.H, self.antenna_aperture)
+            r2 = 180/np.pi*alpha
+            
+            if np.cos(lat)>1e-2:
+                r1 = r2/np.cos(lat);
+            else:
+                r1 = 180;
+
+            ellipse = Ellipse((long*180/np.pi, lat*180/np.pi), width=2*r1, height=2*r2, color=color, alpha=0.2, transform=ccrs.PlateCarree())
+            ax.add_patch(ellipse)
+
     
         plt.title(f'Constellation coverage: {self.h} km, {self.inc*180/np.pi:.0f} deg, {self.m} x {self.n} , walker {self.walker_option}')
         
         fig.name = f'{self.idFullContext()}_fig1'
 
-        return fig;
+        if save_fig:
+            fig.savefig(f'{save_folder}/{fig.name}.png')
+
+        if enable_interaction:
+            plt.show()
+
+        return fig.name;
     
-    def plot_constellation_coverage(self):
+    def plot_constellation_coverage(self, save_fig = False, save_folder = '', enable_interaction = False):
         H = self.H
         TOTAL_AREA = 4*np.pi*((EARTH_RADIUS+H)**2)
     
@@ -181,13 +451,13 @@ class Constellation(object):
 
         fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
     
-        levels1 = np.append(levels, np.max(n))
-    
+        levels1 = np.append(levels-0.5, np.max(n))
+        
         # Create a custom colormap
         coolwarm = plt.get_cmap('coolwarm')
         colors = [(1, 1, 1)] + [coolwarm(i) for i in range(coolwarm.N)]
         cmap = ListedColormap(colors)
-        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+        norm = BoundaryNorm(levels1, ncolors=cmap.N, clip=True)
     
         # Plot coverage as contour
         contour = ax.contourf(long_grid*180/np.pi, lat_grid*180/np.pi, n, levels=levels1, cmap=cmap, norm=norm)
@@ -203,10 +473,23 @@ class Constellation(object):
     
         # Add colorbar with title
         cbar = plt.colorbar(contour, ax=ax, orientation='horizontal', pad=0.05)
+        
+        labels = [f'{levels[i]}' for i in levels]
+        labels[-1] = labels[-1]+'+'
+        cbar.set_ticks(levels)
+        cbar.set_ticklabels(labels)
         cbar.set_label('Number of visible satellites')
     
         plt.title(f'Constellation coverage: {self.h} km, {self.inc*180/np.pi:.0f} deg, {self.m} x {self.n} , walker {self.walker_option}')
         fig.name = f'{self.idFullContext()}_fig2'
+
+        if save_fig:
+            fig.savefig(f'{save_folder}/{fig.name}.png')
+
+        if enable_interaction:
+            plt.show()
+
+        ## Create results table
 
         index_names = ['% area covered']
         column_names = [f'{idx}' for idx in levels]  # String array for column names
@@ -214,7 +497,7 @@ class Constellation(object):
 
         table = pd.DataFrame([[f'{a*100:.1f} %' for a in area]], index=index_names, columns=column_names)
 
-        return fig, table
+        return fig.name, table
 
 def angle_u_v(u,v):
     u_unit = u/np.linalg.norm(u)

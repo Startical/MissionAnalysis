@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     ## Parametric analysis
     runParametricAnalysis();
-
+    
     ## Evaluate constellations
     constellations = []
     constellations.append(Constellation("case0", 650, 80*np.pi/180, 10, 28, "star", 65*np.pi/180, 18))
