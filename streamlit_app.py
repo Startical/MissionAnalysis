@@ -7,6 +7,15 @@ from Model.ConstellationDesign import Constellation, FL_TO_ALT, ALT_TO_FL
 
 import os
 
+# Path to the flag file
+flag_file = 'setup_completed.flag'
+
+# Check if the setup has already been completed
+if not os.path.exists(flag_file):
+
+    st.cache_data.clear()
+    os.system('apt-get update && apt-get install -y libxrender1')
+
 
 def section_model_description():
 
