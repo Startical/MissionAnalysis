@@ -1,1 +1,3 @@
 libxrender1
+libegl1-mesa
+libosmesa6
