@@ -1,21 +1,4 @@
 import streamlit as st
-import os
-
-# Path to the flag file
-flag_file = 'setup_completed.flag'
-
-# Check if the setup has already been completed
-if not os.path.exists(flag_file):
-    print("Clearing cache data...")
-    st.cache_data.clear()
-    print("Installing system dependencies...")
-    os.system('apt-get update && apt-get install -y libxrender1')
-
-    # Create the flag file to indicate setup completion
-    with open(flag_file, 'w') as f:
-        f.write('Setup completed')
-
-    print("Done! starting app...")
 
 import numpy as np
 import matplotlib.pyplot as plt
