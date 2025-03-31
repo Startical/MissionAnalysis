@@ -1,3 +1,6 @@
 libxrender1
 libegl1-mesa
 libosmesa6
+mesa-utils
+libgl1-mesa-dri
+libegl1-mesa-dev
