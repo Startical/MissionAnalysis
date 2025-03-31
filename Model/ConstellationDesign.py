@@ -4,7 +4,7 @@ from Scripts.ParametricAnalysis import antenna_swath
 
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg')  # or 'Qt5Agg' if you prefer
+#matplotlib.use('Qt5Agg')  # or 'Qt5Agg' if you prefer
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
