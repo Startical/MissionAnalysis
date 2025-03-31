@@ -8,7 +8,9 @@ flag_file = 'setup_completed.flag'
 if not os.path.exists(flag_file):
 
     st.cache_data.clear()
+    print("Installing system dependencies...")
     os.system('apt-get update && apt-get install -y libxrender1')
+    print("Done! starting app...")
 
 import numpy as np
 import matplotlib.pyplot as plt
