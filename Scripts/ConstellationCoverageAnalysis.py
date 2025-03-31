@@ -4,13 +4,14 @@ import os
 import webbrowser
 import pandas as pd
 
-def evaluate_constellations(constellations):
+def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
+    
+    figs_folder = f'{folder}/constellations'
     
     # Create the results folder if it does not exist
-    folder = 'results'
     if not os.path.exists(folder):
         os.makedirs(folder)
-    figs_folder = f'{folder}/constellations'
+        
     if not os.path.exists(figs_folder):
         os.makedirs(figs_folder)
 
@@ -23,8 +24,8 @@ def evaluate_constellations(constellations):
         constellation.initializeSpacecraft()
 
         fig0_name = constellation.plot_constellation3D(save_fig=True, save_folder=figs_folder)
-        fig1_name = constellation.plot_constellation_groundTrack(save_fig=True, save_folder=figs_folder)
-        fig2_name, table = constellation.plot_constellation_coverage(save_fig=True, save_folder=figs_folder)
+        fig1_name, *_ = constellation.plot_constellation_groundTrack(save_fig=True, save_folder=figs_folder)
+        fig2_name, table, *_ = constellation.plot_constellation_coverage(save_fig=True, save_folder=figs_folder)
 
         # Set the index of the table to the constellation identifier
         table.index = [f'{constellation.id}']
@@ -125,13 +126,14 @@ def evaluate_constellations(constellations):
 
 
     # save report
-    file_name = 'Constellation_sizing-Coverage_analysis'
-    file_path = f'{folder}/{file_name}.html'
-    print(f'Saving report to {file_path}')
-    with open(f'{file_path}', 'w') as f:
-        f.write(html)
+    if save_report:
+        file_name = 'Constellation_sizing-Coverage_analysis'
+        file_path = f'{folder}/{file_name}.html'
+        print(f'Saving report to {file_path}')
+        with open(f'{file_path}', 'w') as f:
+            f.write(html)
 
-    webbrowser.open('file://' + os.path.realpath(file_path))
+        webbrowser.open('file://' + os.path.realpath(file_path))
 
 def reportStyle():
     style = f'''

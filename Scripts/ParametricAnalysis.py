@@ -6,7 +6,7 @@ import webbrowser
 
 from OrbitTools.Constants import EARTH_RADIUS
 
-def runParametricAnalysis():
+def runParametricAnalysis(save_report, folder):
     # Parametric inputs
     H = 18; # flight level in km
     h = np.arange(500, 1250, 50) #altitude in kms
@@ -26,7 +26,8 @@ def runParametricAnalysis():
     table3 = multiCoverage(h, beta, H, N1, N2)
 
     ## Print report
-    printReport('results', 'Constellation_sizing-Parametric_analysis', creq, H, fig1, fig2, table2, table3, N1, N2)
+    if save_report:
+        printReport(folder, 'Constellation_sizing-Parametric_analysis', creq, H, fig1, fig2, table2, table3, N1, N2)
 
 def geometricalCoverage(h, beta, H = 0, creq = 1500):
     """Parametric analysis of the geometrical coverage at a given flight level (H)"""
@@ -43,7 +44,7 @@ def geometricalCoverage(h, beta, H = 0, creq = 1500):
         p = (EARTH_RADIUS+h[i])/(EARTH_RADIUS+H)
 
         # lim - antenna tangent to flight level
-        betamax[i] = np.asin(1/p)
+        betamax[i] = np.arcsin(1/p)
         clim[i] = (EARTH_RADIUS+H)*(np.pi/2-betamax[i])
 
         # maximum coverage
@@ -88,7 +89,7 @@ def inclination_vs_altitude(h, H=0):
 
         hh = (EARTH_RADIUS+h[i])/(EARTH_RADIUS+H);
 
-        inc[i] = np.asin(1/hh)
+        inc[i] = np.arcsin(1/hh)
 
     plt.plot(h,inc*180/np.pi)
 
@@ -170,22 +171,22 @@ def multiCoverage(h, beta, H=0, N1 = 3, N2 = 0):
 def antenna_swath(h,H, beta):
     hh = (EARTH_RADIUS+h)/(EARTH_RADIUS+H);
 
-    betalim = np.asin(1/hh)
+    betalim = np.arcsin(1/hh)
     
     if beta <= betalim:
 
         alpha = 0;
         while np.abs(np.sin(alpha)-(hh-np.cos(alpha))*np.tan(beta)) > 1e-6:
-            alpha = np.asin((hh-np.cos(alpha))*np.tan(beta));
+            alpha = np.arcsin((hh-np.cos(alpha))*np.tan(beta));
 
     else: 
-        betamin = np.asin(EARTH_RADIUS/(EARTH_RADIUS+h))
+        betamin = np.arcsin(EARTH_RADIUS/(EARTH_RADIUS+h))
 
         # First solution, before tangent point
         #alpha1 = 0;
         #
         #while np.abs(np.sin(alpha1)-(hh-np.cos(alpha1))*np.tan(betamin)) > 1e-6:
-        #    alpha1 = np.asin((hh-np.cos(alpha1))*np.tan(betamin));
+        #    alpha1 = np.arcsin((hh-np.cos(alpha1))*np.tan(betamin));
 
         # Second solution, after tangent point
         deltaAlpha = np.pi/2/1000

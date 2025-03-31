@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MissionAnalysis", "MissionAnalysis\MissionAnalysis.pyproj", "{3070E7DD-3378-494D-8466-FC91FEF6AE91}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MissionAnalysis", "MissionAnalysis.pyproj", "{3070E7DD-3378-494D-8466-FC91FEF6AE91}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

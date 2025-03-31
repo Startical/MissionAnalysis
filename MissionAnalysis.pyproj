@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>MissionAnalysis</Name>
     <RootNamespace>MissionAnalysis</RootNamespace>
-    <InterpreterId>Global|VisualStudio|python-3.13.2</InterpreterId>
+    <InterpreterId>Global|PythonCore|3.9</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +23,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MissionAnalysis.py" />
+    <Compile Include="SatcomTools\ITU_R_P_2041.py" />
+    <Compile Include="SatcomTools\ITU_R_P_525.py" />
+    <Compile Include="SatcomTools\ITU_R_P_835.py" />
+    <Compile Include="SatcomTools\ITU_R_P_676.py" />
+    <Compile Include="SatcomTools\ITU_R_P_840.py" />
+    <Compile Include="SatcomTools\ITU_R_P_839.py" />
+    <Compile Include="SatcomTools\ITU_R_P_836.py" />
+    <Compile Include="SatcomTools\PointCoordinates.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SatcomTools\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Model\__init__.py">
       <SubType>Code</SubType>
     </Compile>
@@ -44,14 +57,19 @@
     <Compile Include="Model\Spacecraft.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="streamlit_app.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Model\" />
+    <Folder Include="SatcomTools\" />
     <Folder Include="OrbitTools\" />
     <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="Global|VisualStudio|python-3.13.2" />
+    <InterpreterReference Include="Global|PythonCore|3.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

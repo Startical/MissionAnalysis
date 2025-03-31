@@ -21,6 +21,11 @@ from OrbitTools.FrameTransformations import FrameTransformations as frames
 
 import vtk
 
+# FLIGHT LEVEL TO ALTITUDE
+ALT_TO_FL = 0.03284*1000  # ALT in km
+FL_TO_ALT = 1/ALT_TO_FL   # ALT in km
+
+
 class Constellation(object):
     """Constellation class"""
 
@@ -57,10 +62,10 @@ class Constellation(object):
     def antenna_swath(self):
 
         hh = (EARTH_RADIUS+self.h)/(EARTH_RADIUS+self.H);
-        gamma = np.acos(1/hh);
+        gamma = np.arccos(1/hh);
 
         while np.sin(gamma)-(hh-np.cos(gamma))*np.tan(self.antenna_aperture) > 1e-6:
-            gamma = np.asin((hh-np.cos(gamma))*np.tan(self.antenna_aperture));
+            gamma = np.arcsin((hh-np.cos(gamma))*np.tan(self.antenna_aperture));
 
         return gamma
 
@@ -89,6 +94,9 @@ class Constellation(object):
                 newSC = Spacecraft(sc_id, kepler_parameters)
                 newSC.propagate(newSC.get_orbitalPeriod(),newSC.get_orbitalPeriod()/20)
                 self.spacecraft.append(newSC)
+
+
+
 
     def plot_constellation3D(self, save_fig = False, save_folder = '', enable_interaction = False):
         """Plot the Constellation 3D geometry"""
@@ -289,9 +297,9 @@ class Constellation(object):
         renderer.ResetCamera()
         renderWindow.Render()
         
-        if save_fig:
+        fig_name = f'{self.idFullContext()}_3D'
 
-            fig_name = f'{self.idFullContext()}_3D'
+        if save_fig:
 
             # Export the scene as an image
             windowToImageFilter = vtk.vtkWindowToImageFilter()
@@ -401,7 +409,7 @@ class Constellation(object):
         if enable_interaction:
             plt.show()
 
-        return fig.name;
+        return fig.name, fig
     
     def plot_constellation_coverage(self, save_fig = False, save_folder = '', enable_interaction = False):
         H = self.H
@@ -431,7 +439,7 @@ class Constellation(object):
                 xyz_P = frames.spherical2cartesian(EARTH_RADIUS + H, long[i], lat[j]);
                 R = np.linalg.norm(xyz_P)
                 u_P = xyz_P/R
-                gamma_lim = np.asin(EARTH_RADIUS/R)
+                gamma_lim = np.arcsin(EARTH_RADIUS/R)
     
                 for sc in self.spacecraft:
     
@@ -497,7 +505,7 @@ class Constellation(object):
 
         table = pd.DataFrame([[f'{a*100:.1f} %' for a in area]], index=index_names, columns=column_names)
 
-        return fig.name, table
+        return fig.name, table, fig
 
 def angle_u_v(u,v):
     u_unit = u/np.linalg.norm(u)
@@ -510,7 +518,7 @@ def angle_u_v(u,v):
     if f>1.0:
         f=1.0
 
-    return np.acos(f)
+    return np.arccos(f)
 
     
         

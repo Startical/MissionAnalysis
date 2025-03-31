@@ -7,7 +7,8 @@ __pycache__/
 .vs/*
 
 # results
-*/results/*
+*results/*
+*tmp/*
 
 # C extensions
 *.so
