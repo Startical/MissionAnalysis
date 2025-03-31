@@ -283,6 +283,7 @@ class Constellation(object):
 
         # render window, and interactor
         renderWindow = vtk.vtkRenderWindow()
+        renderWindow.OffScreenRenderingOn()
         renderWindow.AddRenderer(renderer)
         
         # Set the size of the render window
@@ -413,7 +414,9 @@ class Constellation(object):
     
     def plot_constellation_coverage(self, save_fig = False, save_folder = '', enable_interaction = False):
         H = self.H
-        TOTAL_AREA = 4*np.pi*((EARTH_RADIUS+H)**2)
+        TOTAL_AREA = 4*np.pi*(EARTH_RADIUS+H)**2
+        AREA_BELOW_75 = TOTAL_AREA - 2*2*np.pi*(EARTH_RADIUS+H)**2*(1-np.cos(np.pi/2-75*np.pi/180))
+        AREA_BELOW_60 = TOTAL_AREA - 2*2*np.pi*(EARTH_RADIUS+H)**2*(1-np.cos(np.pi/2-60*np.pi/180))
     
         deltaLong = np.pi/50
         long = np.arange(0,2*np.pi+deltaLong, deltaLong)
@@ -428,6 +431,9 @@ class Constellation(object):
 
         # area placeholder
         area = np.zeros(len(levels))
+
+        area_75 = np.zeros(len(levels))
+        area_60 = np.zeros(len(levels))
     
         for i in range(len(long)): 
             for j in range(len(lat)):
@@ -456,6 +462,11 @@ class Constellation(object):
         
                 idx = int(min(n[j,i],len(area)-1))
                 area[idx] = area[idx]+da/TOTAL_AREA
+
+                if abs(lat[j])<=75*np.pi/180:
+                    area_75[idx] = area_75[idx]+da/AREA_BELOW_75
+                if abs(lat[j])<=60*np.pi/180:
+                    area_60[idx] = area_60[idx]+da/AREA_BELOW_60
 
         fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
     
@@ -499,11 +510,11 @@ class Constellation(object):
 
         ## Create results table
 
-        index_names = ['% area covered']
+        index_names = ['% total area covered', '% lat<75deg', '% lat<60deg']
         column_names = [f'{idx}' for idx in levels]  # String array for column names
         column_names[-1] = '>'+column_names[-1]
 
-        table = pd.DataFrame([[f'{a*100:.1f} %' for a in area]], index=index_names, columns=column_names)
+        table = pd.DataFrame([[f'{a*100:.1f} %' for a in area],[f'{a*100:.1f} %' for a in area_75],[f'{a*100:.1f} %' for a in area_60]], index=index_names, columns=column_names)
 
         return fig.name, table, fig
 
