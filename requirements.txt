@@ -1,3 +1,7 @@
+numpy
+pandas
+
 matplotlib
+cartopy
 pyqt5
 vtk
