@@ -1,10 +1,4 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-
-from Model.ConstellationDesign import Constellation, FL_TO_ALT, ALT_TO_FL
-
 import os
 
 # Path to the flag file
@@ -15,6 +9,14 @@ if not os.path.exists(flag_file):
 
     st.cache_data.clear()
     os.system('apt-get update && apt-get install -y libxrender1')
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from Model.ConstellationDesign import Constellation, FL_TO_ALT, ALT_TO_FL
+
+
 
 
 def section_model_description():
