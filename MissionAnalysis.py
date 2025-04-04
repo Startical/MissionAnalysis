@@ -9,7 +9,7 @@ if __name__ == "__main__":
     save_report = True
 
     ## Parametric analysis
-    runParametricAnalysis(save_report, folder)
+    #runParametricAnalysis(save_report, folder)
     
     ## Evaluate constellations
     constellations = []

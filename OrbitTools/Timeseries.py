@@ -1,6 +1,9 @@
 import numpy as np
 
 class Timeseries(object):
+
+    refTime = 'YYYY-MM-DDTHH:MM:SSZ'
+
     def __init__(self):
         self.time = []  # Time vector
         self.data = np.empty((0, 0))  # 2D data array
@@ -21,6 +24,15 @@ class Timeseries(object):
         """Get the data array"""
         return self.data
 
+    def get_index(self, t):
+        """Get the index of a specific time"""
+        if t in self.time:
+            index = self.time.index(t)
+            return index
+        else:
+            raise ValueError("Time not found in the time vector")
+
+
     def get_data_at_time(self, t):
         """Get the data at a specific time"""
         if t in self.time:
@@ -30,7 +42,7 @@ class Timeseries(object):
             raise ValueError("Time not found in the time vector")
 
     def get_data_at_index(self, idx):
-        """Get the data at a specific time"""
+        """Get the data at a specific index"""
         if idx < len(self.time):
             return self.time[idx], self.data[idx]
         else:
@@ -46,7 +58,7 @@ if __name__ == "__main__":
     print("Time vector:", ts.get_time())
     print("Data array:\n", ts.get_data())
     print("Data at time 1:", ts.get_data_at_time(1))
-
+    print("Data at time (last):", ts.get_data_at_index(-1))
 
 
 
