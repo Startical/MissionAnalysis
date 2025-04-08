@@ -1,6 +1,7 @@
+from MissionAnalysis.OrbitTools.PlotUtils import initialize_Earth_2D_plot, plot_circle_projection
 from Model.Spacecraft import Spacecraft
 from OrbitTools.Constants import EARTH_RADIUS
-from Scripts.ParametricAnalysis import antenna_swath
+from Scripts.CoverageAnalysis import antenna_swath, check_visibility_lower_upper_terminal
 
 import numpy as np
 import matplotlib
@@ -8,9 +9,7 @@ import matplotlib
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from matplotlib.patches import Circle, Ellipse
 from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColormap
-from mpl_toolkits.mplot3d import Axes3D
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -351,16 +350,7 @@ class Constellation(object):
     def plot_constellation_groundTrack(self, save_fig = False, save_folder = '', enable_interaction = False):
         """Plot the Earth in longitude/latitude coordinates"""
         
-        fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={'projection': ccrs.PlateCarree()})
-    
-        # Add coastlines and borders
-        ax.coastlines()
-        ax.add_feature(cfeature.BORDERS, linestyle=':')
-    
-        # Add gridlines
-        gl = ax.gridlines(draw_labels=True)
-        gl.top_labels = False
-        gl.right_labels = False
+        fig, ax = initialize_Earth_2D_plot()
     
         # Define a colormap
         colormap = cm.get_cmap('viridis', self.m)
@@ -387,17 +377,10 @@ class Constellation(object):
             dlat = lat1-lat
             ax.arrow(long * 180 / np.pi, lat * 180 / np.pi, dlong/np.linalg.norm([dlong,dlat]) * arrow_length, dlat/np.linalg.norm([dlong,dlat])  * arrow_length, color=color, head_width=1, head_length=2, transform=ccrs.PlateCarree())
     
-            # Add a disk (ellipse to consider the 2D projection) centered on each point
+            # Add a disk centered on each point
             alpha, c = antenna_swath(self.h, self.H, self.antenna_aperture)
-            r2 = 180/np.pi*alpha
             
-            if np.cos(lat)>1e-2:
-                r1 = r2/np.cos(lat);
-            else:
-                r1 = 180;
-
-            ellipse = Ellipse((long*180/np.pi, lat*180/np.pi), width=2*r1, height=2*r2, color=color, alpha=0.2, transform=ccrs.PlateCarree())
-            ax.add_patch(ellipse)
+            plot_circle_projection(ax, long*180/np.pi, lat*180/np.pi, 180/np.pi*alpha, color=color, alpha = 0.2)
 
     
         plt.title(f'Constellation coverage: {self.h} km, {self.inc*180/np.pi:.0f} deg, {self.m} x {self.n} , walker {self.walker_option}')
@@ -443,22 +426,13 @@ class Constellation(object):
     
                 # point position
                 xyz_P = frames.spherical2cartesian(EARTH_RADIUS + H, long[i], lat[j]);
-                R = np.linalg.norm(xyz_P)
-                u_P = xyz_P/R
-                gamma_lim = np.arcsin(EARTH_RADIUS/R)
-    
+                
                 for sc in self.spacecraft:
+
+                    is_visible = check_visibility_lower_upper_terminal(xyz_P, sc.xyz.get_data_at_time(0), lower_terminal_fov=np.pi, upper_terminal_fov=self.antenna_aperture)
     
-                    xyz_SAT = sc.xyz.get_data_at_time(0)
-                    u_SAT = xyz_SAT/np.linalg.norm(xyz_SAT)
-                    xyz_P_SAT = xyz_SAT - xyz_P
-                    u_P_SAT = xyz_P_SAT/np.linalg.norm(xyz_P_SAT)
-    
-                    # check if satellite is above the horizon
-                    if (angle_u_v(-u_P, u_P_SAT) > gamma_lim):
-                        # satellite is above the horizon, check if visible within antenna aperture
-                        if (angle_u_v(-u_SAT, -u_P_SAT)< self.antenna_aperture):
-                            n[j,i] = n[j,i]+1
+                    if is_visible:
+                        n[j,i] = n[j,i]+1
         
                 idx = int(min(n[j,i],len(area)-1))
                 area[idx] = area[idx]+da/TOTAL_AREA
@@ -468,7 +442,8 @@ class Constellation(object):
                 if abs(lat[j])<=60*np.pi/180:
                     area_60[idx] = area_60[idx]+da/AREA_BELOW_60
 
-        fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
+        # 
+        fig, ax = initialize_Earth_2D_plot()
     
         levels1 = np.append(levels-0.5, np.max(n))
         
@@ -480,15 +455,6 @@ class Constellation(object):
     
         # Plot coverage as contour
         contour = ax.contourf(long_grid*180/np.pi, lat_grid*180/np.pi, n, levels=levels1, cmap=cmap, norm=norm)
-    
-        # Add coastlines and borders
-        ax.coastlines()
-        ax.add_feature(cfeature.BORDERS, linestyle=':')
-    
-        # Add gridlines
-        gl = ax.gridlines(draw_labels=True)
-        gl.top_labels = False
-        gl.right_labels = False
     
         # Add colorbar with title
         cbar = plt.colorbar(contour, ax=ax, orientation='horizontal', pad=0.05)
@@ -518,19 +484,5 @@ class Constellation(object):
 
         return fig.name, table, fig
 
-def angle_u_v(u,v):
-    u_unit = u/np.linalg.norm(u)
-    v_unit = v/np.linalg.norm(v)
-
-    f = np.dot(u_unit,v_unit)
-
-    if f<-1.0:
-        f=-1.0
-    if f>1.0:
-        f=1.0
-
-    return np.arccos(f)
-
-    
-        
+     
 

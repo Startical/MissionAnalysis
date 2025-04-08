@@ -167,39 +167,6 @@ def multiCoverage(h, beta, H=0, N1 = 3, N2 = 0):
     
     return table
 
-
-def antenna_swath(h,H, beta):
-    hh = (EARTH_RADIUS+h)/(EARTH_RADIUS+H);
-
-    betalim = np.arcsin(1/hh)
-    
-    if beta <= betalim:
-
-        alpha = 0;
-        while np.abs(np.sin(alpha)-(hh-np.cos(alpha))*np.tan(beta)) > 1e-6:
-            alpha = np.arcsin((hh-np.cos(alpha))*np.tan(beta));
-
-    else: 
-        betamin = np.arcsin(EARTH_RADIUS/(EARTH_RADIUS+h))
-
-        # First solution, before tangent point
-        #alpha1 = 0;
-        #
-        #while np.abs(np.sin(alpha1)-(hh-np.cos(alpha1))*np.tan(betamin)) > 1e-6:
-        #    alpha1 = np.arcsin((hh-np.cos(alpha1))*np.tan(betamin));
-
-        # Second solution, after tangent point
-        deltaAlpha = np.pi/2/1000
-        alpha2 = np.pi/2-betalim;
-        while (np.sin(alpha2)-(hh-np.cos(alpha2))*np.tan(betamin)) > 0:
-            alpha2 = alpha2+deltaAlpha
-
-        alpha = alpha2
-                
-    c = (EARTH_RADIUS+H)*alpha
-
-    return alpha, c
-
 def printReport(folder, file_name, creq, H, fig1, fig2, table2, table3, N1, N2):
 
     # Create folders
