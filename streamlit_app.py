@@ -5,9 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from Model.ConstellationDesign import Constellation, FL_TO_ALT, ALT_TO_FL
-
-
+from Model.ConstellationDesign import Constellation
+from OrbitTools.ConstellationPlotUtils import *
 
 
 def section_model_description():
@@ -148,7 +147,7 @@ if __name__ == "__main__":
         constellation.initializeSpacecraft()
 
         # Display results
-        fig0_name = constellation.plot_constellation3D(True,folder)
+        fig0_name = plot_constellation3D(constellation,True,folder)
 
         st.markdown('''
         #### 3D Plot 
@@ -166,7 +165,7 @@ if __name__ == "__main__":
         with col2:
             st.image(f'{folder}/{fig0_name}_YZ.png', caption='View from X (above Equator)', use_container_width =True)
 
-        fig1_name, fig1 = constellation.plot_constellation_groundTrack(False,folder)
+        fig1_name, fig1 = plot_constellation_groundTrack(constellation,False,folder)
         
         st.markdown('''
         #### Ground track
@@ -175,7 +174,7 @@ if __name__ == "__main__":
 
         st.pyplot(fig1)
 
-        fig2_name, table, fig2 = constellation.plot_constellation_coverage(False,folder)
+        fig2_name, table, fig2 = plot_constellation_coverage(constellation,False,folder)
 
         st.markdown(f'''
         #### Constellation coverage

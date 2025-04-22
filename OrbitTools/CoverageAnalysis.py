@@ -77,7 +77,7 @@ def check_visibility_lower_upper_terminal(lower_terminal_pos, upper_terminal_pos
     ecef_u_lw_up = ecef_xyz_lw_up/np.linalg.norm(ecef_xyz_lw_up)
 
     # horizon limit
-    gamma_lim = np.arcsin(EARTH_RADIUS/r_lw)
+    gamma_lim = np.arcsin(np.clip(EARTH_RADIUS/r_lw,-1.0,+1.0))
     # check if upper terminal is above the Earth's horizon
     if (angle_u_v(-ecef_u_lw, ecef_u_lw_up) > gamma_lim):
         # satellite is above the horizon, check if visible within antenna apertures

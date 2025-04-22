@@ -9,7 +9,7 @@ if __name__ == "__main__":
     save_report = True
 
     ## Parametric analysis
-    #runParametricAnalysis(save_report, folder)
+    runParametricAnalysis(save_report, folder)
     
     ## Evaluate constellations
     constellations = []
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #constellations.append(Constellation("case2b", 700, 80*np.pi/180, 6, 12, "star", 65*np.pi/180, 18))
 
     constellations.append(Constellation("case0",  650, 45*np.pi/180, 6, 20, "delta", 65*np.pi/180, 18))
-    #constellations.append(Constellation("case1a", 650, 45*np.pi/180, 6, 15, "star" , 65*np.pi/180, 18))
+    constellations.append(Constellation("case1a", 650, 45*np.pi/180, 6, 15, "star" , 65*np.pi/180, 18))
     #constellations.append(Constellation("case1b", 650, 45*np.pi/180, 6, 15, "delta", 65*np.pi/180, 18))
     #constellations.append(Constellation("case2a", 700, 45*np.pi/180, 6, 12, "star" , 65*np.pi/180, 18))
     #constellations.append(Constellation("case2b", 700, 45*np.pi/180, 6, 12, "delta", 65*np.pi/180, 18))

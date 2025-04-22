@@ -1,4 +1,4 @@
-from Model.ConstellationDesign import Constellation
+from OrbitTools.ConstellationPlotUtils import *
 import numpy as np
 import os
 import webbrowser
@@ -23,12 +23,14 @@ def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
         print(f'Running analysis: {constellation.idFullContext()}')
         constellation.initializeSpacecraft()
 
-        fig0_name = constellation.plot_constellation3D(save_fig=True, save_folder=figs_folder)
-        fig1_name, *_ = constellation.plot_constellation_groundTrack(save_fig=True, save_folder=figs_folder)
-        fig2_name, table, *_ = constellation.plot_constellation_coverage(save_fig=True, save_folder=figs_folder)
+        fig0_name = plot_constellation3D(constellation,save_fig=True, save_folder=figs_folder)
+        fig1_name, *_ = plot_constellation_groundTrack(constellation,save_fig=True, save_folder=figs_folder)
+        fig2_name, full_table, *_ = plot_constellation_coverage(constellation,save_fig=True, save_folder=figs_folder)
+
+        table = full_table.iloc[0:1] # keep only the first row of the table
 
         # Set the index of the table to the constellation identifier
-        table.index = [f'{constellation.id}']
+        table.index = [f'{constellation.name}']
 
         # Collect all tables
         all_tables.append(table)
@@ -36,7 +38,7 @@ def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
         # report
         constellation_params = f'''
         <tr>
-            <td><a href="#{constellation.idFullContext()}">{constellation.id}</a></td>
+            <td><a href="#{constellation.idFullContext()}">{constellation.name}</a></td>
             <td>{constellation.walker_option}</td>
             <td>{constellation.h}</td>
             <td>{constellation.inc*180/np.pi:.0f}</td>
@@ -46,7 +48,7 @@ def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
         '''
         constellation_definitions+= f'''{constellation_params}'''
         constellation_reports += f'''
-                <h2 id={constellation.idFullContext()}>{constellation.id}</h2>
+                <h2 id={constellation.idFullContext()}>{constellation.name}</h2>
                 <table border="1">
                 <thead>
                     <tr>
