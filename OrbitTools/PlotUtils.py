@@ -24,6 +24,45 @@ def initialize_Earth_2D_plot():
 
     return fig, ax
 
+def sat_coverage(long, lat, r):
+
+    #This fuction generates the vertices of the satellite coverage
+    
+    r1 = r
+    r2 = r
+
+    N = 18
+    vertices = []
+
+    for i in range(N):
+        theta = 2*np.pi*i/N
+        lat1 = lat + r*np.sin(theta)
+        dlong = r*np.cos(theta)
+
+        if lat1 > 180-(lat+r):
+            lat1 = 180-(lat+r)
+            dlong = (dlong+180+180) % 360 - 180
+        elif lat1 < -180-(lat-r):
+            lat1 = -180-(lat-r)
+            dlong = (dlong+180+180) % 360 - 180
+
+
+        dlong = dlong/np.cos(np.deg2rad(lat1))
+
+        long1 = np.clip(long+dlong, -180, 180) #(long + dlong +180) % 360 -180
+
+        # 
+        vertices.append([long1,lat1])
+
+        r1 = min(max(r1,dlong),180)
+
+    if (lat+r)>90 or (lat-r)<-90:
+        # sort values and add corners to ensure that the area containing the centre (long,lat) is printed by the Polygon
+        vertices = sorted(vertices, key=lambda x: x[0])
+        vertices.insert(0,[-180, np.sign(lat)*90])
+        vertices.append([180, np.sign(lat)*90])
+
+    return vertices
 
 def plot_angle_variable(time,angles):
     '''
@@ -93,6 +132,16 @@ def plot_ground_station(ax, gs, theta, gs_color = [0,1,0]):
     ax.scatter(np.rad2deg(gs.long), np.rad2deg(gs.lat), marker='d', color = gs_color, label=gs.gs_id, transform=ccrs.PlateCarree())
 
     return r1, r2
+
+def ground_track_plot(spacecraft):
+    
+
+    ## Print satellite trajectory
+    sc_h_long_lat_ts = spacecraft.get_position_h_long_lat()
+
+    lat, long = plot_angle_variable(np.rad2deg(sc_h_long_lat_ts.data[:,2]), np.rad2deg(sc_h_long_lat_ts.data[:,1]))
+
+    return lat,long
 
 def initialize_ground_track_plot(spacecraft):
     
