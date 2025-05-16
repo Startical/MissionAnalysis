@@ -4,7 +4,9 @@ import pandas as pd
 from OrbitTools.Constants import EARTH_RADIUS
 from OrbitTools.FrameTransformations import FrameTransformations as frames
 from datetime import datetime, timezone, timedelta
+import warnings
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def antenna_swath(h,H, beta):
     '''
@@ -117,6 +119,9 @@ def check_ground_station_spacecraft_visibility(spacecraft, ground_stations):
             t_start =  (datetime.strptime(refTime, '%Y-%m-%dT%H:%M:%SZ') + timedelta(seconds=visibility_timelapse[idx][0])).strftime('%Y-%m-%dT%H:%M:%SZ')
             t_end =  (datetime.strptime(refTime, '%Y-%m-%dT%H:%M:%SZ') + timedelta(seconds=visibility_timelapse[idx][-1])).strftime('%Y-%m-%dT%H:%M:%SZ')
             duration = visibility_timelapse[idx][-1] - visibility_timelapse[idx][0]
+        else:
+            t_start = 'No visibility'
+            t_end = 'No visibility'
 
         new_row = {
             'Ground Station': ground_station.gs_id,
@@ -128,8 +133,10 @@ def check_ground_station_spacecraft_visibility(spacecraft, ground_stations):
 
         rows.append(new_row)
 
-    gs_visibility = pd.concat([gs_visibility, pd.DataFrame(rows)], ignore_index=True)
-
+    new_df = pd.DataFrame(rows)
+    
+    gs_visibility = pd.concat([gs_visibility, new_df], ignore_index=True)
+    
     return gs_visibility, visibility_timelapse
 
 def angle_u_v(u,v):

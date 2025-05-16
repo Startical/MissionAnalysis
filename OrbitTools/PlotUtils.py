@@ -27,6 +27,8 @@ def initialize_Earth_2D_plot():
 def sat_coverage(long, lat, r):
 
     #This fuction generates the vertices of the satellite coverage
+    #Input/output = lon [deg], lat[deg]
+    #Input r = [deg]
     
     r1 = r
     r2 = r
@@ -61,6 +63,8 @@ def sat_coverage(long, lat, r):
         vertices = sorted(vertices, key=lambda x: x[0])
         vertices.insert(0,[-180, np.sign(lat)*90])
         vertices.append([180, np.sign(lat)*90])
+    
+    vertices = [[coord[1],coord[0]] for coord in vertices]
 
     return vertices
 
