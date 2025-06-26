@@ -384,7 +384,7 @@ def plot_constellation_coverage(constellation, save_fig = False, save_folder = '
     # 
     fig, ax = initialize_Earth_2D_plot()
     
-    levels1 = np.append(levels-0.5, np.max(n))
+    levels1 = np.append(levels-0.5, max(np.max(n),np.max(levels)) )
         
     # Create a custom colormap
     coolwarm = plt.get_cmap('coolwarm')

@@ -17,7 +17,7 @@ def orbitalPeriod(sma):
     return T
 
 
-def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset = 0):
+def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset = 0, dateRef='2025-03-21T12:00:00Z'):
 
     '''
     This function propagates a spacecraft orbit defined with keplerian parameters and returns cartesian coordinates
@@ -36,7 +36,8 @@ def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset 
 
     ## Initialize timeseries
 
-    xyz_ts = Timeseries()
+    xyz_j2000_ts = Timeseries()
+    xyz_ecef_ts = Timeseries()
     ta_ts  = Timeseries()
     
     Nsteps = int(np.ceil(DT/dt));
@@ -59,9 +60,11 @@ def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset 
         ta_ts.append(t,ta);
 
         xyz = frames.kepler2cartesian(sma, ecc, inc, raan, aop, ta);
-        xyz_ts.append(t,xyz)
+        xyz_j2000_ts.append(t,xyz)
 
-    return xyz_ts, ta_ts
+        xyz_ecef_ts.append(t,frames.j2000_to_ecef(dateRef, xyz, time_offset+t))
+
+    return xyz_j2000_ts, xyz_ecef_ts, ta_ts
 
 
 class SpacecraftPosition(object):
@@ -69,7 +72,7 @@ class SpacecraftPosition(object):
     refTime = 'YYYY-MM-DDTHH:MM:SSZ'
     kepler_parameters = np.zeros(6)
 
-    def __init__(self, refTime = 'YYYY-MM-DDTHH:MM:SSZ', kepler_parameters = np.zeros(6)):
+    def __init__(self, refTime = '2025-03-21T12:00:00Z', kepler_parameters = np.zeros(6)):
         self.refTime = refTime
         self.kepler_parameters = kepler_parameters
 
@@ -81,12 +84,12 @@ class SpacecraftPosition(object):
         time_offset = (newTime-timeRef).total_seconds()
 
         # propagate
-        xyz_ts, ta_ts = propagatePositionFromKeplerianElements(self.kepler_parameters,DT,dt, time_offset)
+        xyz_j2000_ts, xyz_ts,ta_ts = propagatePositionFromKeplerianElements(self.kepler_parameters,DT,dt, time_offset, self.refTime)
 
         xyz_ts.refTime = startTime
         ta_ts.refTime = startTime
 
-        return xyz_ts, ta_ts
+        return xyz_j2000_ts,xyz_ts, ta_ts
 
 
 
@@ -100,11 +103,12 @@ class Spacecraft(object):
     
     ta = Timeseries();
     xyz = Timeseries();
+    xyz_j2000 = Timeseries();
     h_long_lat = Timeseries();
 
     antenna_aperture = 0;
     
-    def __init__(self, id, kepler_parameters=np.zeros(6), refTime = 'YYYY-MM-DDTHH:MM:SSZ'):
+    def __init__(self, id, kepler_parameters=np.zeros(6), refTime = '2025-03-25T12:00:00Z'):
         """Constructor"""
         self.id = id
         self.referencePosition = SpacecraftPosition(refTime = refTime,kepler_parameters=kepler_parameters)
@@ -112,11 +116,11 @@ class Spacecraft(object):
     def get_orbitalPeriod(self):
         return orbitalPeriod(self.referencePosition.kepler_parameters[0])
 
-    def propagate(self,DT,dt):
-        self.xyz, self.ta = propagatePositionFromKeplerianElements(self.referencePosition.kepler_parameters,DT,dt)
+    def propagate(self,DT,dt, refDate = referencePosition.refTime):
+        self.xyz_j2000, self.xyz, self.ta = propagatePositionFromKeplerianElements(self.referencePosition.kepler_parameters,DT,dt, 0, refDate)
 
     def propagate_from_start_date(self, startDate, DT = 3600, dt = 60):
-        self.xyz, self.ta = self.referencePosition.propagate_from_start_date(startDate,DT,dt)
+        self.xyz_j2000, self.xyz, self.ta = self.referencePosition.propagate_from_start_date(startDate,DT,dt)
 
     def get_position_h_long_lat(self):
 
@@ -130,10 +134,7 @@ class Spacecraft(object):
 
             time = refTime + t*u.s
 
-            j2000_xyz = CartesianRepresentation(xyz[0]*u.km,xyz[1]*u.km,xyz[2]*u.km)
-            ecef_xyz = GCRS(j2000_xyz, obstime=time).transform_to(ITRS(obstime=time))
-
-            r,long,lat = frames.cartesian2spherical(ecef_xyz.cartesian.xyz.value)
+            r,long,lat = frames.cartesian2spherical(xyz)
 
             h_long_lat_ts.append(t,[r-EARTH_RADIUS, long, lat])
 
