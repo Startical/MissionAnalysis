@@ -4,9 +4,10 @@ class Timeseries(object):
 
     refTime = 'YYYY-MM-DDTHH:MM:SSZ'
 
-    def __init__(self):
+    def __init__(self, refTime = 'YYYY-MM-DDTHH:MM:SSZ'):
         self.time = []  # Time vector
         self.data = np.empty((0, 0))  # 2D data array
+        self.refTime = refTime  # Reference time for the timeseries
 
     def append(self, t, d):
         """Append a new time and data point"""

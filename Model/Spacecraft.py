@@ -36,9 +36,9 @@ def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset 
 
     ## Initialize timeseries
 
-    xyz_j2000_ts = Timeseries()
-    xyz_ecef_ts = Timeseries()
-    ta_ts  = Timeseries()
+    xyz_j2000_ts = Timeseries(dateRef)
+    xyz_ecef_ts = Timeseries(dateRef)
+    ta_ts  = Timeseries(dateRef)
     
     Nsteps = int(np.ceil(DT/dt));
 
@@ -116,7 +116,11 @@ class Spacecraft(object):
     def get_orbitalPeriod(self):
         return orbitalPeriod(self.referencePosition.kepler_parameters[0])
 
-    def propagate(self,DT,dt, refDate = referencePosition.refTime):
+    def propagate(self,DT,dt, refDate = ""):
+
+        if refDate == "":
+            refDate = self.referencePosition.refTime
+
         self.xyz_j2000, self.xyz, self.ta = propagatePositionFromKeplerianElements(self.referencePosition.kepler_parameters,DT,dt, 0, refDate)
 
     def propagate_from_start_date(self, startDate, DT = 3600, dt = 60):
