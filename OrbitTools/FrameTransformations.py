@@ -1,5 +1,5 @@
 import numpy as np
-
+from OrbitTools.Constants import *
 class FrameTransformations(object):
     """This class performs frame transformations"""
 
@@ -89,5 +89,51 @@ class FrameTransformations(object):
         while M-E+ecc*np.sin(E) > 1e-6:
             E = M + ecc*np.sin(E)
         return E
+    def calculate_gmst(date):
+
+        """
+
+        Calculate the Greenwich Mean Sidereal Time (GMST) for a given UTC date and time.
+
+        Parameters:
+
+        date (datetime): The UTC date and time for which to calculate GMST.
+
+        Returns:
+
+        float: The GMST in degrees.
+
+        """
+
+        # Convert the date to Julian Date (JD)
+
+        jd = date.toordinal() + 1721424.5 + (date.hour + date.minute / 60 + date.second / 3600) / 24
+
+        # Julian centuries since J2000.0
+
+        t = (jd - 2451545.0) / 36525
+
+        # GMST in seconds using IAU 2006 formula
+
+        gmst_sec = 67310.54841 + (876600 * 3600 + 8640184.812866) * t + 0.093104 * t**2 - 6.2e-6 * t**3
+
+        # Convert to rad
+
+        gmst_rad = (gmst_sec * EARTH_W) % 2*np.pi
+
+        return gmst_rad
+    
+    def j2000_to_ecef(date_ref, xyz_j2000, elapsedTime):
+    
+        GMST_ref = calculate_gmst(date_ref)
+    
+        GMST = GMST_ref + EARTH_W*elapsedTime
+    
+        xyz_earth = [np.cos(GMST), np.sin(GMST), 0]
+    
+        xyz_ecef = xyz_j2000 - xyz_earth
+    
+        return xyz_ecef
+    
 
 
