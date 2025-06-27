@@ -21,7 +21,9 @@ def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
 
     for constellation in constellations:
         print(f'Running analysis: {constellation.idFullContext()}')
-        constellation.initializeSpacecraft()
+
+        if len(constellation.spacecraft)==0:
+            constellation.initializeSpacecraft()
 
         fig0_name = plot_constellation3D(constellation,save_fig=True, save_folder=figs_folder)
         fig1_name, *_ = plot_constellation_groundTrack(constellation,save_fig=True, save_folder=figs_folder)
@@ -136,6 +138,9 @@ def evaluate_constellations(constellations, save_report = True, folder = 'tmp'):
             f.write(html)
 
         webbrowser.open('file://' + os.path.realpath(file_path))
+
+    else:
+        plt.show()
 
 def reportStyle():
     style = f'''
