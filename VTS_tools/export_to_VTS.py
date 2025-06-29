@@ -40,108 +40,120 @@ def get_time_reference_MJD_format(timeRef):
 
 def export_position_file(xyz_j2000_ts, destination_path="", object_name = "MySat"):
 
-    ## File destination and name
-    if destination_path == "":
-        destination_path = get_default_destination_path()
+    first_line = "CIC_OEM_VERS = 2.0"
+    comment_section = f"COMMENT Reference Date = {xyz_j2000_ts.refTime}\n"
+    custom_section1 = f'''CENTER_NAME = EARTH
+REF_FRAME   = EME2000'''
 
-    filename = os.path.join(destination_path, f'{object_name}_position.txt')
+    header = build_header(first_line=first_line, object_name=object_name, custom_section1=custom_section1, comment_section=comment_section)
 
-    current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    data_string = timeseries_to_string(xyz_j2000_ts, format = '.3f')
 
-    ## Time reference
-    MJD_day, MJD_seconds = get_time_reference_MJD_format(xyz_j2000_ts.refTime)
-
-    ## Open file for writing
-    with open(filename, 'w') as f:
-        # Write header
-        f.write("CIC_OEM_VERS = 2.0\n")
-        f.write(f"CREATION_DATE = {current_time}\n")
-        f.write(f"ORIGINATOR = {user_name}\n")
-        f.write("\n")
-        f.write("META_START\n")
-        f.write("\n")
-        f.write(f"COMMENT Reference Date = {xyz_j2000_ts.refTime}\n")
-        f.write("\n")
-        f.write(f"OBJECT_NAME = {object_name}\n")
-        f.write(f"OBJECT_ID = {object_name}\n")
-        f.write("\n")
-        f.write("CENTER_NAME = EARTH\n")
-        f.write("REF_FRAME   = EME2000\n")
-        f.write("TIME_SYSTEM = UTC\n")
-        f.write("\n")
-        f.write("META_STOP\n")
-        f.write("\n")
-
-
-        # Write data
-        for i in range(len(xyz_j2000_ts.time)):
-            t = xyz_j2000_ts.time[i]
-            xyz = xyz_j2000_ts.data[i]
-
-            tt = MJD_seconds+t
-            days = np.floor(tt/24/3600)
-            secs = tt - days*24*3600
-
-            f.write(f"{MJD_day+days:.0f} {secs:.0f} {xyz[0]:.3f} {xyz[1]:.3f} {xyz[2]:.3f}\n")
-
-    print(f"Position file exported to {filename}")
+    filename = export_file(destination_path=destination_path, file_name=f'{object_name}_position.txt', header=header, data=data_string)
 
     return filename
-
 
 def export_attitude_file(q_j2000_sc_ts, destination_path="", object_name = "MySat"):
+        
+    first_line = "CIC_AEM_VERS = 1.0"
+    comment_section = f"COMMENT Reference Date = {q_j2000_sc_ts.refTime}\n"
+    custom_section1 = f'''REF_FRAME_A = EME2000
+REF_FRAME_B = SC_BODY_1
+ATTITUDE_DIR = A2B'''
 
-    ## File destination and name
-    if destination_path == "":
-        destination_path = get_default_destination_path()
+    custom_section2= f'ATTITUDE_TYPE = QUATERNION'''
 
-    filename = os.path.join(destination_path, f'{object_name}_attitude.txt')
+    header = build_header(first_line=first_line, object_name=object_name, custom_section1=custom_section1, custom_section2 = custom_section2, comment_section=comment_section)
+
+    data_string = timeseries_to_string(q_j2000_sc_ts, order = [3,0,1,2], format = '.6f')
+    
+    filename = export_file(destination_path=destination_path, file_name=f'{object_name}_attitude.txt', header=header, data=data_string)
+
+    return filename
+
+def export_timeseries_file(ts, destination_path="", object_name = "MySat", order = [0,1,2,3,4], format = '.6f'):
+        
+    first_line = "CIC_MEM_VERS = 1.0"
+    comment_section = f"COMMENT Reference Date = {ts.refTime}\n"
+    custom_section1 = f'''USER_DEFINED_PROTOCOL = NONE
+USER_DEFINED_CONTENT = {ts.id}
+USER_DEFINED_SIZE = {len(ts.data[0])}
+USER_DEFINED_TYPE = REAL
+USER_DEFINED_UNIT = {ts.units}'''
+
+    header = build_header(first_line=first_line, object_name=object_name, custom_section1=custom_section1, comment_section=comment_section)
+
+    data_string = timeseries_to_string(ts, order=order, format=format)
+    
+    filename = export_file(destination_path=destination_path, file_name=f'{object_name}_{ts.id}.txt', header=header, data=data_string)
+
+    return filename
+
+def build_header(first_line = 'CIC_MEM_VERS = 1.0', object_name = '', custom_section1 = '', custom_section2 = '', comment_section=''):
+
+    header = first_line + '\n'
 
     current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-    ## Time reference
-    MJD_day, MJD_seconds = get_time_reference_MJD_format(q_j2000_sc_ts.refTime)
+    header = header + f"CREATION_DATE = {current_time}\n"
+    header = header + f"ORIGINATOR = {user_name}\n"
+    header = header + "\n"
+    header = header + "META_START\n"
+    header = header + "\n"
+    header = header + comment_section+ "\n"
+    header = header + f"OBJECT_NAME = {object_name}\n"
+    header = header + f"OBJECT_ID = {object_name}\n"
+    header = header + "\n"
+    header = header + custom_section1 + "\n"
+    header = header + "TIME_SYSTEM = UTC\n"
+    header = header + "\n"
+    header = header + custom_section2 + "\n"
+    header = header + "\n"
+    header = header + "META_STOP\n"
+    header = header + "\n"
 
+    return header
+
+def timeseries_to_string(ts, order = [0,1,2,3,4], format = '.6f'):
+
+    ## Time reference
+    MJD_day, MJD_seconds = get_time_reference_MJD_format(ts.refTime)
+
+    # Write data
+    ts_string = ''
+    for i in range(len(ts.time)):
+        t = ts.time[i]
+        data = ts.data[i]
+
+        tt = MJD_seconds+t
+        days = np.floor(tt/24/3600)
+        secs = tt - days*24*3600
+
+        ts_line = f"{MJD_day+days:.0f} {secs:.0f}"
+        
+        for j in range(len(data)):
+            ts_line = ts_line + f" {data[order[j]]:{format}}"
+            
+        ts_string = ts_string + ts_line + "\n"
+
+    return ts_string
+
+def export_file(destination_path="", file_name="my_file.txt", header="", data=""):
+    ## File destination and name
+    if destination_path == "":
+        destination_path = get_default_destination_path()
+    filename = os.path.join(destination_path, file_name)
     ## Open file for writing
     with open(filename, 'w') as f:
         # Write header
-        f.write("CIC_AEM_VERS = 1.0\n")
-        f.write(f"CREATION_DATE = {current_time}\n")
-        f.write(f"ORIGINATOR = {user_name}\n")
-        f.write("\n")
-        f.write("META_START\n")
-        f.write("\n")
-        f.write(f"COMMENT Reference Date = {q_j2000_sc_ts.refTime}\n")
-        f.write("\n")
-        f.write(f"OBJECT_NAME = {object_name}\n")
-        f.write(f"OBJECT_ID = {object_name}\n")
-        f.write("\n")
-        f.write("REF_FRAME_A = EME2000\n")
-        f.write("REF_FRAME_B = SC_BODY_1\n")
-        f.write("ATTITUDE_DIR = A2B\n")
-        f.write("\n")
-        f.write("TIME_SYSTEM = UTC\n")
-        f.write("\n")
-        f.write("ATTITUDE_TYPE = QUATERNION\n")
-        f.write("\n")
-        f.write("META_STOP\n")
-        f.write("\n")
-
-
+        f.write(header)
+        
         # Write data
-        for i in range(len(q_j2000_sc_ts.time)):
-            t = q_j2000_sc_ts.time[i]
-            q = q_j2000_sc_ts.data[i]
-
-            tt = MJD_seconds+t
-            days = np.floor(tt/24/3600)
-            secs = tt - days*24*3600
-
-            f.write(f"{MJD_day+days:.0f} {secs:.0f} {q[3]:.6f} {q[0]:.6f} {q[1]:.6f} {q[2]:.6f}\n")
-
-    print(f"Attitude file exported to {filename}")
-
+        f.write(data)
+    print(f"File exported to {filename}")
     return filename
+
+
 
 
 def export_spacecraft_pos_att_to_VTS(spacecraft, destination_path=""):
@@ -158,6 +170,8 @@ if __name__ == "__main__":
     spacecraft.set_default_attitude_pointing(q_lof_sc = [0,0,0,1])
 
     export_spacecraft_pos_att_to_VTS(spacecraft, destination_path=r"C:\Users\plnegro\Programas\VTS\Data\IOD-1\Data")
+    export_timeseries_file(spacecraft.ta, destination_path=r"C:\Users\plnegro\Programas\VTS\Data\IOD-1\Data", object_name=spacecraft.id, format='.3f')
+
 
     initialize_ground_track_plot(spacecraft)
 

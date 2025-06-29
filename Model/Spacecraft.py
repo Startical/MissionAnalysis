@@ -21,8 +21,8 @@ def orbitalPeriod(sma):
 
 def compute_lof_sc_guidance_with_constant_bias(xyz_j2000_ts, q_lof_sc = [0,0,0,1]):
 
-    q_j2000_lof_ts = Timeseries(xyz_j2000_ts.refTime)
-    q_j2000_sc_ts = Timeseries(xyz_j2000_ts.refTime)
+    q_j2000_lof_ts = Timeseries('q_j2000_lof',xyz_j2000_ts.refTime)
+    q_j2000_sc_ts = Timeseries('q_j2000_sc',xyz_j2000_ts.refTime)
 
     for i in range(len(xyz_j2000_ts.time)):
 
@@ -81,9 +81,9 @@ def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset 
 
     ## Initialize timeseries
 
-    xyz_j2000_ts = Timeseries(dateRef)
-    xyz_ecef_ts = Timeseries(dateRef)
-    ta_ts  = Timeseries(dateRef)
+    xyz_j2000_ts = Timeseries('pos_j2000',dateRef)
+    xyz_ecef_ts = Timeseries('pos_ecef',dateRef)
+    ta_ts  = Timeseries('true_anomaly', dateRef)
     
     Nsteps = int(np.ceil(DT/dt));
 
@@ -146,13 +146,13 @@ class Spacecraft(object):
 
     referencePosition = SpacecraftPosition()
     
-    ta = Timeseries();
-    xyz = Timeseries();
-    xyz_j2000 = Timeseries();
-    h_long_lat = Timeseries();
+    ta = Timeseries('true_anomaly');
+    xyz = Timeseries('pos_ecef');
+    xyz_j2000 = Timeseries('pos_j2000');
+    h_long_lat = Timeseries('h_long_lat');
 
-    q_j2000_lof = Timeseries();
-    q_j2000_sc = Timeseries();
+    q_j2000_lof = Timeseries('qj2000_lof');
+    q_j2000_sc = Timeseries('q_j2000_sc');
 
     antenna_aperture = 0;
     
@@ -181,7 +181,7 @@ class Spacecraft(object):
 
     def get_position_h_long_lat(self):
 
-        h_long_lat_ts = Timeseries()
+        h_long_lat_ts = Timeseries('h_long_lat')
         h_long_lat_ts.refTime = self.xyz.refTime
         
         refTime = Time(self.xyz.refTime, scale='utc')
