@@ -1,13 +1,14 @@
 import numpy as np
-from OrbitTools.Timeseries import Timeseries
-from OrbitTools.Constants import EARTH_MU, EARTH_RADIUS, EARTH_W
+from CommonTools.Timeseries import Timeseries
+from CommonTools.Constants import EARTH_MU, EARTH_RADIUS, EARTH_W
 from OrbitTools.FrameTransformations import FrameTransformations as frames
-from datetime import datetime, timedelta
 from astropy.coordinates import CartesianRepresentation, EarthLocation, ITRS, GCRS
 from astropy.time import Time
 import astropy.units as u
 
-from scipy.spatial.transform import Rotation as R
+import CommonTools.Mathlib as Math
+import CommonTools.Datelib as Dates
+
 
 
 
@@ -50,13 +51,11 @@ def compute_lof_sc_guidance_with_constant_bias(xyz_j2000_ts, q_lof_sc = [0,0,0,1
         u = np.dot(R_J2000_LOF,[0,0,1])
 
         #
-        r_j2000_lof = R.from_matrix(R_J2000_LOF)
-        q_j2000_lof = r_j2000_lof.as_quat()
+        q_j2000_lof = Math.rotation_matrix_to_quat(R_J2000_LOF)
 
         q_j2000_lof_ts.append(xyz_j2000_ts.time[i], q_j2000_lof)
 
-        r_j2000_sc = R.from_quat(q_j2000_lof) * R.from_quat(q_lof_sc)
-        q_j2000_sc = r_j2000_sc.as_quat()
+        q_j2000_sc = Math.quat_mult(q_j2000_lof, q_lof_sc)
 
         q_j2000_sc_ts.append(xyz_j2000_ts.time[i], q_j2000_sc)
 
@@ -123,10 +122,7 @@ class SpacecraftPosition(object):
 
     def propagate_from_start_date(self,startTime,DT,dt):
         # Time offset
-        timeRef = datetime.strptime(self.refTime, '%Y-%m-%dT%H:%M:%SZ')
-        newTime = datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
-
-        time_offset = (newTime-timeRef).total_seconds()
+        time_offset = Dates.time_offset(startTime, self.refTime)
 
         # propagate
         xyz_j2000_ts, xyz_ts,ta_ts = propagatePositionFromKeplerianElements(self.kepler_parameters,DT,dt, time_offset, self.refTime)

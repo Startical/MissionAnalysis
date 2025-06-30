@@ -2,7 +2,7 @@ import numpy as np
 
 from datetime import datetime
 
-from OrbitTools.Constants import EARTH_W
+from CommonTools.Constants import EARTH_W
 
 from astropy.time import Time
 

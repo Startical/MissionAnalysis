@@ -1,5 +1,5 @@
 from Model.Spacecraft import Spacecraft
-from OrbitTools.Constants import EARTH_RADIUS
+from CommonTools.Constants import EARTH_RADIUS
 
 import numpy as np
 

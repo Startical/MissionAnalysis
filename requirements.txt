@@ -6,3 +6,4 @@ cartopy
 pyqt5
 vtk
 astropy==5.3.4
+TLE-tools

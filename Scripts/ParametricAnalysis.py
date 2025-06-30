@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import webbrowser
 
-from OrbitTools.Constants import EARTH_RADIUS
+from CommonTools.Constants import EARTH_RADIUS
 from OrbitTools.CoverageAnalysis import antenna_swath
 
 def runParametricAnalysis(save_report, folder):

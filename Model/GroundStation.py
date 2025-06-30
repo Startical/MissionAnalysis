@@ -1,6 +1,6 @@
 
 import numpy as np
-from OrbitTools.Constants import EARTH_RADIUS
+from CommonTools.Constants import EARTH_RADIUS
 
 
 class GroundStation(object):
