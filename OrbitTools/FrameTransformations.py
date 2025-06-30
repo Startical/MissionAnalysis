@@ -2,6 +2,9 @@ import numpy as np
 from datetime import datetime
 from MissionAnalysis.OrbitTools.Constants import *
 
+from astropy.time import Time
+
+
 class FrameTransformations(object):
     """This class performs frame transformations"""
 
@@ -139,28 +142,26 @@ class FrameTransformations(object):
     
 
     def calculate_gmst(dateString):
-        """
-        Calculate the Greenwich Mean Sidereal Time (GMST) for a given UTC date and time.
+        #"""
+        #Calculate the Greenwich Mean Sidereal Time (GMST) for a given UTC date and time.
+        #
+        #Parameters:
+        #date (datetime): The UTC date and time for which to calculate GMST.
+        #
+        #Returns:
+        #float: The GMST in rad.
+        #"""
         
-        Parameters:
-        date (datetime): The UTC date and time for which to calculate GMST.
-        
-        Returns:
-        float: The GMST in degrees.
-        """
-        # Convert the date to Julian Date (JD)
-        date = datetime.strptime(dateString, '%Y-%m-%dT%H:%M:%SZ')
-        jd = date.toordinal() + 1721424.5 + (date.hour + date.minute / 60 + date.second / 3600) / 24
-        
-        # Julian centuries since J2000.0
-        t = (jd - 2451545.0) / 36525
-        
-        # GMST in seconds using IAU 2006 formula
-        gmst_sec = 67310.54841 + (876600 * 3600 + 8640184.812866) * t + 0.093104 * t**2 - 6.2e-6 * t**3
-        
-        # Convert to rad
-        gmst_rad = (gmst_sec * EARTH_W) % 2*np.pi
-        
+        # Create an Astropy Time object
+        t = Time(dateString, format='isot', scale='utc')
+
+        # Get GMST in seconds
+        gmst = t.sidereal_time('mean', 'greenwich')
+
+        gmst_deg = gmst.deg  # Convert to degrees
+
+        gmst_rad = gmst_deg*np.pi/180
+
         return gmst_rad
 
     def j2000_to_ecef(date_ref, xyz_j2000, elapsedTime):
@@ -170,11 +171,10 @@ class FrameTransformations(object):
         GMST = GMST_ref + EARTH_W*elapsedTime
     
         R_ecef_j2000 = np.array([
-                        [np.cos(GMST), -np.sin(GMST), 0],
-                        [np.sin(GMST), np.cos(GMST), 0],
+                        [np.cos(GMST), np.sin(GMST), 0],
+                        [-np.sin(GMST), np.cos(GMST), 0],
                         [0,0,1]])
     
         xyz_ecef = np.dot(R_ecef_j2000, xyz_j2000)
 
         return xyz_ecef
-

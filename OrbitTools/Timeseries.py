@@ -2,11 +2,15 @@ import numpy as np
 
 class Timeseries(object):
 
+    id = ""  # Identifier for the timeseries
     refTime = 'YYYY-MM-DDTHH:MM:SSZ'
+    units = "[n/a]"  # Units of the timeseries data
 
-    def __init__(self):
+    def __init__(self, ts_id = "", refTime = 'YYYY-MM-DDTHH:MM:SSZ'):
+        self.id = ts_id  # Identifier for the timeseries
         self.time = []  # Time vector
         self.data = np.empty((0, 0))  # 2D data array
+        self.refTime = refTime  # Reference time for the timeseries
 
     def append(self, t, d):
         """Append a new time and data point"""

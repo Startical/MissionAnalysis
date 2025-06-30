@@ -7,6 +7,8 @@ from astropy.coordinates import CartesianRepresentation, EarthLocation, ITRS, GC
 from astropy.time import Time
 import astropy.units as u
 
+from scipy.spatial.transform import Rotation as R
+
 
 
 def orbitalPeriod(sma):
@@ -16,6 +18,49 @@ def orbitalPeriod(sma):
 
     return T
 
+
+def compute_lof_sc_guidance_with_constant_bias(xyz_j2000_ts, q_lof_sc = [0,0,0,1]):
+
+    q_j2000_lof_ts = Timeseries('q_j2000_lof',xyz_j2000_ts.refTime)
+    q_j2000_sc_ts = Timeseries('q_j2000_sc',xyz_j2000_ts.refTime)
+
+    for i in range(len(xyz_j2000_ts.time)):
+
+        xyz = xyz_j2000_ts.data[i]
+
+        if i == 0:
+            xyz_dot = [1,0,0]
+
+            if np.linalg.norm(np.cross(xyz,xyz_dot))<1e-3:
+                xyz_dot = [0,1,0]
+
+        else:
+            xyz_prev = xyz_j2000_ts.data[i-1]
+            dt = xyz_j2000_ts.time[i] - xyz_j2000_ts.time[i-1]
+
+            xyz_dot = (xyz - xyz_prev) / dt
+
+        Z_LOF = - xyz/np.linalg.norm(xyz)
+        Y_LOF = - np.cross(xyz,xyz_dot)/np.linalg.norm(np.cross(xyz,xyz_dot))
+        X_LOF = np.cross(Y_LOF,Z_LOF)
+
+        R_J2000_LOF = np.array([X_LOF, Y_LOF, Z_LOF]).T
+
+        # check
+        u = np.dot(R_J2000_LOF,[0,0,1])
+
+        #
+        r_j2000_lof = R.from_matrix(R_J2000_LOF)
+        q_j2000_lof = r_j2000_lof.as_quat()
+
+        q_j2000_lof_ts.append(xyz_j2000_ts.time[i], q_j2000_lof)
+
+        r_j2000_sc = R.from_quat(q_j2000_lof) * R.from_quat(q_lof_sc)
+        q_j2000_sc = r_j2000_sc.as_quat()
+
+        q_j2000_sc_ts.append(xyz_j2000_ts.time[i], q_j2000_sc)
+
+    return q_j2000_lof_ts, q_j2000_sc_ts
 
 def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset = 0, dateRef='2025-03-21T12:00:00Z'):
 
@@ -36,9 +81,9 @@ def propagatePositionFromKeplerianElements(kepler_parameters,DT,dt, time_offset 
 
     ## Initialize timeseries
 
-    xyz_j2000_ts = Timeseries()
-    xyz_ecef_ts = Timeseries()
-    ta_ts  = Timeseries()
+    xyz_j2000_ts = Timeseries('pos_j2000',dateRef)
+    xyz_ecef_ts = Timeseries('pos_ecef',dateRef)
+    ta_ts  = Timeseries('true_anomaly', dateRef)
     
     Nsteps = int(np.ceil(DT/dt));
 
@@ -101,10 +146,13 @@ class Spacecraft(object):
 
     referencePosition = SpacecraftPosition()
     
-    ta = Timeseries();
-    xyz = Timeseries();
-    xyz_j2000 = Timeseries();
-    h_long_lat = Timeseries();
+    ta = Timeseries('true_anomaly');
+    xyz = Timeseries('pos_ecef');
+    xyz_j2000 = Timeseries('pos_j2000');
+    h_long_lat = Timeseries('h_long_lat');
+
+    q_j2000_lof = Timeseries('qj2000_lof');
+    q_j2000_sc = Timeseries('q_j2000_sc');
 
     antenna_aperture = 0;
     
@@ -116,15 +164,24 @@ class Spacecraft(object):
     def get_orbitalPeriod(self):
         return orbitalPeriod(self.referencePosition.kepler_parameters[0])
 
-    def propagate(self,DT,dt, refDate = referencePosition.refTime):
+    def propagate(self,DT,dt, refDate = ""):
+
+        if refDate == "":
+            refDate = self.referencePosition.refTime
+
         self.xyz_j2000, self.xyz, self.ta = propagatePositionFromKeplerianElements(self.referencePosition.kepler_parameters,DT,dt, 0, refDate)
 
     def propagate_from_start_date(self, startDate, DT = 3600, dt = 60):
         self.xyz_j2000, self.xyz, self.ta = self.referencePosition.propagate_from_start_date(startDate,DT,dt)
 
+    def set_default_attitude_pointing(self, q_lof_sc = [0,0,0,1]):
+
+        self.q_j2000_lof, self.q_j2000_sc = compute_lof_sc_guidance_with_constant_bias(self.xyz_j2000, q_lof_sc)
+
+
     def get_position_h_long_lat(self):
 
-        h_long_lat_ts = Timeseries()
+        h_long_lat_ts = Timeseries('h_long_lat')
         h_long_lat_ts.refTime = self.xyz.refTime
         
         refTime = Time(self.xyz.refTime, scale='utc')
