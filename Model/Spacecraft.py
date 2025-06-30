@@ -108,7 +108,7 @@ class Spacecraft(object):
 
     antenna_aperture = 0;
     
-    def __init__(self, id, kepler_parameters=np.zeros(6), refTime = '2025-03-25T12:00:00Z'):
+    def __init__(self, id, kepler_parameters=np.zeros(6), refTime = '2025-03-21T12:00:00Z'):
         """Constructor"""
         self.id = id
         self.referencePosition = SpacecraftPosition(refTime = refTime,kepler_parameters=kepler_parameters)
