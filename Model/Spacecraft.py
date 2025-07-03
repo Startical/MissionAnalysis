@@ -127,6 +127,7 @@ class SpacecraftPosition(object):
         # propagate
         xyz_j2000_ts, xyz_ts,ta_ts = propagatePositionFromKeplerianElements(self.kepler_parameters,DT,dt, time_offset, self.refTime)
 
+        xyz_j2000_ts.refTime = startTime
         xyz_ts.refTime = startTime
         ta_ts.refTime = startTime
 

@@ -75,7 +75,7 @@ class Timeseries(object):
                     # Linear interpolation
                     weight = (t - t0) / (t1 - t0)
                     return d0 + weight * (d1 - d0)
-                raise ValueError("Interpolation failed: time not bracketed properly")
+            raise ValueError("Interpolation failed: time not bracketed properly")
 
 
     def get_data_at_index(self, idx):
