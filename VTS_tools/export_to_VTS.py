@@ -5,11 +5,14 @@ import os
 from datetime import datetime
 
 from Model.Spacecraft import Spacecraft
-from OrbitTools.PlotUtils import initialize_ground_track_plot
+from CommonTools.PlotUtils import initialize_ground_track_plot
 import matplotlib.pyplot as plt
 
+import CommonTools.Datelib as Dates
+
+
 MJD0 = 55276
-MJD_ref = datetime.strptime('2010-03-21T00:00:00Z', '%Y-%m-%dT%H:%M:%SZ')
+MJD_ref = '2010-03-21T00:00:00Z'
 user_name = os.getenv('USERNAME')
 
 def get_default_destination_path():
@@ -27,9 +30,7 @@ def get_time_reference_MJD_format(timeRef):
     VTS uses Modified Julian Date (MJD).
     '''
 
-    time = datetime.strptime(timeRef, '%Y-%m-%dT%H:%M:%SZ')
-
-    time_offset = (time-MJD_ref).total_seconds()
+    time_offset = Dates.time_offset(timeRef, MJD_ref)
 
     MJD_day = np.floor(time_offset/(24*3600))
     MJD_seconds = time_offset - MJD_day * 24 * 3600
@@ -164,9 +165,21 @@ def export_spacecraft_pos_att_to_VTS(spacecraft, destination_path=""):
 
 if __name__ == "__main__":
 
-    spacecraft = Spacecraft("IOD-1", kepler_parameters=np.array([7000, 0.01, np.radians(98), 0, 0, 0]), refTime='2025-03-25T12:00:00Z')
+    #spacecraft = Spacecraft("IOD-1", kepler_parameters=np.array([7000, 0.01, np.radians(98), 0, 0, 0]), refTime='2025-03-25T12:00:00Z')
 
-    spacecraft.propagate(90*60, 30)
+    #spacecraft.propagate(90*60, 30)
+    #spacecraft.set_default_attitude_pointing(q_lof_sc = [0,0,0,1])
+
+    tle_string = """
+    IOD-1                   
+    1 63212U 25052C   25180.66670925  .00018502  00000+0  74897-3 0  9998
+    2 63212  97.4238  74.6328 0001151 350.6636   9.4580 15.24738195 16329
+    """
+
+    from Model.SatelliteUtils import initialize_spacecraft_from_TLE
+    spacecraft = initialize_spacecraft_from_TLE("IOD1", tle_string)
+    spacecraft.propagate_from_start_date("2025-06-30T10:56:00Z",3600,60)
+
     spacecraft.set_default_attitude_pointing(q_lof_sc = [0,0,0,1])
 
     export_spacecraft_pos_att_to_VTS(spacecraft, destination_path=r"C:\Users\plnegro\Programas\VTS\Data\IOD-1\Data")

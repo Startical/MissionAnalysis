@@ -1,6 +1,7 @@
 import numpy as np
 from datetime import datetime
-from MissionAnalysis.OrbitTools.Constants import *
+
+from CommonTools.Constants import EARTH_W
 
 from astropy.time import Time
 

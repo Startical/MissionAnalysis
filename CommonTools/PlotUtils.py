@@ -142,4 +142,7 @@ def initialize_ground_track_plot(spacecraft):
         ax.arrow(np.rad2deg(sc_h_long_lat_ts.data[idx,1]),np.rad2deg(sc_h_long_lat_ts.data[idx,2]),
                 dlong/np.linalg.norm([dlong,dlat]) * arrow_length, dlat/np.linalg.norm([dlong,dlat])  * arrow_length, color='k', head_width=1, head_length=2, transform=ccrs.PlateCarree())
     
+    ax.set_title(f'ground_track_{spacecraft.id}\n{spacecraft.xyz.refTime}')
+    fig.name = f'ground_track_{spacecraft.id}'
+
     return fig, ax

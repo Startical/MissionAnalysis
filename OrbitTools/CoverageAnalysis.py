@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from OrbitTools.Constants import EARTH_RADIUS
+from CommonTools.Constants import EARTH_RADIUS
 from OrbitTools.FrameTransformations import FrameTransformations as frames
 from datetime import datetime, timezone, timedelta
 

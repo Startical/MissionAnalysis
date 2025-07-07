@@ -1,7 +1,7 @@
 
 from Model.Spacecraft import Spacecraft
-from OrbitTools.Constants import EARTH_RADIUS
-from OrbitTools.PlotUtils import initialize_Earth_2D_plot, plot_circle_projection
+from CommonTools.Constants import EARTH_RADIUS
+from CommonTools.PlotUtils import initialize_Earth_2D_plot, plot_circle_projection
 from OrbitTools.CoverageAnalysis import antenna_swath, check_visibility_lower_upper_terminal
 
 import numpy as np

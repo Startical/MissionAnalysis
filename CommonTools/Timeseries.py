@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Timeseries(object):
 
     id = ""  # Identifier for the timeseries
@@ -19,6 +20,27 @@ class Timeseries(object):
             self.data = np.array(d).reshape(1, -1)  # Initialize data array
         else:
             self.data = np.vstack([self.data, d])  # Append new data row
+
+    def cleanup_timeseries(self):
+        """Sort in increasing vaues of time and remove duplicated times"""
+        # sort in increasing values of time
+        idx = [i for i, _ in sorted(enumerate(self.time), key=lambda x: x[1])]
+
+        self.time = [self.time[i] for i in idx]
+        self.data = self.data[idx]
+
+        # remove duplicated items
+        
+        # Get indexes of first occurrences of unique values
+        unique_indexes = []
+        seen = set()
+        for i, val in enumerate(self.time):
+            if val not in seen:
+                seen.add(val)
+                unique_indexes.append(i)
+
+        self.time = [self.time[i] for i in unique_indexes]
+        self.data = self.data[unique_indexes]
 
     def get_time(self):
         """Get the time vector"""
@@ -42,8 +64,19 @@ class Timeseries(object):
         if t in self.time:
             index = self.time.index(t)
             return self.data[index]
+        elif t < self.time[0] or t > self.time[-1]:
+            raise ValueError("Time is outside the range of the time vector")
         else:
-            raise ValueError("Time not found in the time vector")
+            # Find the two nearest time points
+            for i in range(len(self.time) - 1):
+                t0, t1 = self.time[i], self.time[i + 1]
+                if t0 < t < t1:
+                    d0, d1 = self.data[i], self.data[i + 1]
+                    # Linear interpolation
+                    weight = (t - t0) / (t1 - t0)
+                    return d0 + weight * (d1 - d0)
+            raise ValueError("Interpolation failed: time not bracketed properly")
+
 
     def get_data_at_index(self, idx):
         """Get the data at a specific index"""

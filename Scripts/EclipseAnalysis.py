@@ -2,7 +2,7 @@
 import numpy as np
 
 from Model.SpaceEnvironment import sun_direction_inertial
-from OrbitTools.Constants import EARTH_RADIUS, EARTH_MU
+from CommonTools.Constants import EARTH_RADIUS, EARTH_MU
 from OrbitTools.FrameTransformations import FrameTransformations as frames
 
 import matplotlib.pyplot as plt
