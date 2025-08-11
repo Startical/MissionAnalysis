@@ -5,7 +5,7 @@ from geopy.distance import distance
 from geopy.point import Point
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-from MissionAnalysis.OrbitTools.Constants import *
+from CommonTools.Constants import *
 import numpy as np
 
 def initialize_Earth_2D_plot():
