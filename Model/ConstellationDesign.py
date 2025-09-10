@@ -54,7 +54,7 @@ class Constellation(object):
 
         return raanDistribution
 
-    def initializeSpacecraft(self,DT,dt):
+    def initializeSpacecraft(self,DT=3600,dt=60):
         
         # Initialize spacecraft parameters
         defaultKeplerParams = np.array([EARTH_RADIUS+self.h, 0, self.inc, 0, 0, 0])
