@@ -1,9 +1,29 @@
 import numpy as np
-from src.Constants import KNOTS_TO_KPH, EARTH_R, H_TO_SECS
 
 from MissionAnalysis.CommonTools.Timeseries import Timeseries
 
 from datetime import datetime
+
+## AERONAUTICAL UNITS
+
+FEET_TO_KM = 0.30480*1e-3 # km
+
+FL_TO_KM = 100*FEET_TO_KM # km
+KM_TO_FL = 1/FL_TO_KM
+
+KNOTS_TO_KPH = 1.852 # km/h
+
+##
+
+
+EARTH_R = 6378 # km
+
+#
+
+SECS_TO_H = 1/3600
+H_TO_SECS = 3600
+
+M_TO_KM = 1E-3
 
 
 def propagate_position(pos_h_long_lat, vel_vx_vyz_track, DT=3600, dt=60):
