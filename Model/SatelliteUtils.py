@@ -1,8 +1,41 @@
+from skyfield.api import EarthSatellite
+from OrbitTools.FrameTransformations import FrameTransformations as Frames
 from Model.Spacecraft import Spacecraft
-from tletools import TLE
+
 import numpy as np
 
+from CommonTools.Datelib import time_offset
+
 import requests
+
+from tletools import TLE
+
+
+def load_tle_from_file(filename, refDate, sat_id):
+    '''
+    The file is an export from https://www.space-track.org/#/gp 
+    with multiple TLEs of the same object, sorted chronologically
+    '''
+
+    with open(filename, newline='', encoding='utf-8'):
+        lines = [line.strip() for line in open(filename) if line.strip()]
+
+    TLEs = {"data":[], "epoch":[]}
+    for i in range(int(np.floor(len(lines)/2))):
+        TLEs["data"].append("  "+sat_id+"\n"+lines[2*i]+"\n"+lines[2*i+1])
+        epoch, *_ = tle2kepler(TLEs["data"][-1])
+        TLEs["epoch"].append(epoch)
+
+    tle_string = TLEs["data"][0]  # Use the first TLE for initialization
+
+    for i in range(len(TLEs["epoch"])):
+
+        if time_offset(TLEs["epoch"][i], refDate) < 0:
+            tle_string = TLEs["data"][i]
+        else: 
+            break
+
+    return tle_string
 
 def get_TLE_with_norad_id(norad_id):
     # URL for the API endpoint
@@ -39,20 +72,32 @@ def tle2kepler(tle_string):
     spacecraft_id = tle_string.strip().splitlines()[0][2:]
     tle_lines = tle_string.strip().splitlines()[1:]  # skip the name line
     formatted_tle_lines = fix_tle_spacing(tle_lines)
+
+    sat = EarthSatellite(formatted_tle_lines[0], formatted_tle_lines[1], spacecraft_id)
+
+    epoch = sat.epoch.utc_iso()
+
+    kepler_elements_v = [Frames.semiMajorAxisFromMeanMotion(sat.model.no_kozai/60),
+                        sat.model.ecco,
+                        sat.model.inclo,
+                        sat.model.nodeo,
+                        sat.model.argpo,
+                        Frames.trueAnomalyFromMeanAnomaly(sat.model.mo,sat.model.ecco)]
+    
     tle = TLE.from_lines(spacecraft_id,*formatted_tle_lines)
     orbit = tle.to_orbit()
-
+    
     kepler_elements = orbit.classical()
-    epoch = tle.epoch.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    kepler_elements_v = [kepler_elements[0].value,
+    epoch2 = tle.epoch.strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    kepler_elements_v2 = [kepler_elements[0].value,
                         kepler_elements[1].value,
                         np.deg2rad(kepler_elements[2].value),
                         np.deg2rad(kepler_elements[3].value),
                         np.deg2rad(kepler_elements[4].value),
                         np.deg2rad(kepler_elements[5].value)]
 
-    return epoch, kepler_elements_v, tle.norad
+    return epoch, kepler_elements_v, sat.model.satnum
 
 def initialize_spacecraft_from_TLE(spacecraft_id, tle_string):
 

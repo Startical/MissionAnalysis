@@ -4,14 +4,14 @@ from matplotlib.patches import Polygon
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-
+from CommonTools.Constants import *
 import numpy as np
 
+def initialize_Earth_2D_plot(fig = None, ax = None):
 
-def initialize_Earth_2D_plot():
-
-    ## Print Earth Map
-    fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
+    if fig == None:
+        ## Print Earth Map
+        fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
     
     # Add coastlines and borders
     ax.coastlines()
@@ -42,6 +42,36 @@ def plot_angle_variable(time,angles):
 
     return time_with_nan, angles_with_nan
 
+def haversine(lat1, lon1, lat2, lon2):
+
+    lat1, lon1 = np.radians(lat1), np.radians(lon1)
+    lat2, lon2 = np.radians(lat2), np.radians(lon2)
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return EARTH_RADIUS * c
+
+def circle_projection(long, lat, az,radius):
+ 
+    lon_new = []
+    lat_new = []
+    for theta in az:
+        lon_aux = []
+        lat_aux = []
+        for r in radius:
+            coords = distance(kilometers=r*EARTH_RADIUS).destination(point=Point(lat,long), bearing=np.rad2deg(theta))
+            if np.deg2rad(coords.latitude) > 90:
+                print("Warning")
+            lon_aux.append(np.deg2rad(coords.longitude))
+            lat_aux.append(np.deg2rad(coords.latitude))
+        
+        lon_new.append(lon_aux)
+        lat_new.append(lat_aux)
+            
+    return np.array(lon_new),np.array(lat_new)
 
 def plot_circle_projection(ax, long, lat, r, color='b', alpha = 0.2):
 
@@ -94,9 +124,9 @@ def plot_ground_station(ax, gs, theta, gs_color = [0,1,0]):
 
     return r1, r2
 
-def initialize_ground_track_plot(spacecraft):
+def initialize_ground_track_plot(spacecraft, fig = None, ax = None):
     
-    fig, ax = initialize_Earth_2D_plot()
+    fig, ax = initialize_Earth_2D_plot(fig, ax)
 
     ## Print satellite trajectory
     sc_h_long_lat_ts = spacecraft.get_position_h_long_lat()

@@ -54,7 +54,7 @@ class Constellation(object):
 
         return raanDistribution
 
-    def initializeSpacecraft(self):
+    def initializeSpacecraft(self,DT=3600,dt=60):
         
         # Initialize spacecraft parameters
         defaultKeplerParams = np.array([EARTH_RADIUS+self.h, 0, self.inc, 0, 0, 0])
@@ -69,7 +69,7 @@ class Constellation(object):
                 kepler_parameters[5] = 2*np.pi/self.n*(j+i/2) % (2 * np.pi)
 
                 newSC = Spacecraft(sc_id, kepler_parameters)
-                newSC.propagate(newSC.get_orbitalPeriod(),newSC.get_orbitalPeriod()/20)
+                newSC.propagate(DT,dt)
                 self.spacecraft.append(newSC)
 
 
