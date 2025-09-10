@@ -66,13 +66,16 @@ def initialize_spacecraft_from_TLE(spacecraft_id, tle_string):
 if __name__ == '__main__':
 
     tle_string = """
-    OBJECT C
-    1 63212U 25052C   25092.84615115  .00046643  00000-0  22484-2 0  9991
-    2 63212  97.4349 347.8550 0001428 176.9790 183.1453 15.18556553  2964
+    OBJECT L                
+    1 64538U 25135L   25218.85785828  .00004346  00000+0  22076-3 0  9997
+    2 64538  97.4473 332.6406 0003727 172.2681 187.8611 15.17401986  711
     """
 
 
     spacecraft = initialize_spacecraft_from_TLE("IOD1", tle_string)
     spacecraft.propagate(3600,60)
+
+    print(spacecraft.referencePosition.kepler_parameters)
+
 
     print(spacecraft.id)

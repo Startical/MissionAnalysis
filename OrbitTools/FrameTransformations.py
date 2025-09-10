@@ -134,3 +134,26 @@ class FrameTransformations(object):
         xyz_ecef = np.dot(R_ecef_j2000, xyz_j2000)
 
         return xyz_ecef
+
+
+if __name__ == "__main__":
+
+    ecc = 0.00004650
+    M0 = 117.052*np.pi/180
+    E0 = FrameTransformations.eccentricAnomalyFromMeanAnomaly(M0, ecc)
+    ta0 = FrameTransformations.trueAnomalyFromEccentricAnomaly(E0, ecc) 
+
+    ta1 = np.arctan2(np.sin(E0)*np.sqrt(1-ecc**2),(np.cos(E0)-ecc))
+
+    E1 = FrameTransformations.eccentricAnomalyFromTrueAnomaly(ecc, ta0)
+    M1 = FrameTransformations.meanAnomalyFromEccentricAnomaly(E1,ecc)
+
+    print(ta0*180/np.pi)
+    print(ta1*180/np.pi)
+  
+    print(M1*180/np.pi)
+    
+    E2 = FrameTransformations.eccentricAnomalyFromTrueAnomaly(ecc, M0)
+    M2 = FrameTransformations.meanAnomalyFromEccentricAnomaly(E2,ecc)
+
+    print(M2*180/np.pi)
