@@ -8,9 +8,6 @@ from CommonTools.Datelib import time_offset
 
 import requests
 
-from tletools import TLE
-
-
 def load_tle_from_file(filename, refDate, sat_id):
     '''
     The file is an export from https://www.space-track.org/#/gp 
@@ -84,19 +81,6 @@ def tle2kepler(tle_string):
                         sat.model.argpo,
                         Frames.trueAnomalyFromMeanAnomaly(sat.model.mo,sat.model.ecco)]
     
-    tle = TLE.from_lines(spacecraft_id,*formatted_tle_lines)
-    orbit = tle.to_orbit()
-    
-    kepler_elements = orbit.classical()
-    epoch2 = tle.epoch.strftime('%Y-%m-%dT%H:%M:%SZ')
-    
-    kepler_elements_v2 = [kepler_elements[0].value,
-                        kepler_elements[1].value,
-                        np.deg2rad(kepler_elements[2].value),
-                        np.deg2rad(kepler_elements[3].value),
-                        np.deg2rad(kepler_elements[4].value),
-                        np.deg2rad(kepler_elements[5].value)]
-
     return epoch, kepler_elements_v, sat.model.satnum
 
 def initialize_spacecraft_from_TLE(spacecraft_id, tle_string):
