@@ -2,7 +2,36 @@ from Model.Spacecraft import Spacecraft
 from tletools import TLE
 import numpy as np
 
+from CommonTools.Datelib import time_offset
+
 import requests
+
+
+def load_tle_from_file(filename, refDate, sat_id):
+    '''
+    The file is an export from https://www.space-track.org/#/gp 
+    with multiple TLEs of the same object, sorted chronologically
+    '''
+
+    with open(filename, newline='', encoding='utf-8'):
+        lines = [line.strip() for line in open(filename) if line.strip()]
+
+    TLEs = {"data":[], "epoch":[]}
+    for i in range(int(np.floor(len(lines)/2))):
+        TLEs["data"].append("  "+sat_id+"\n"+lines[2*i]+"\n"+lines[2*i+1])
+        epoch, *_ = tle2kepler(TLEs["data"][-1])
+        TLEs["epoch"].append(epoch)
+
+    tle_string = TLEs["data"][0]  # Use the first TLE for initialization
+
+    for i in range(len(TLEs["epoch"])):
+
+        if time_offset(TLEs["epoch"][i], refDate) < 0:
+            tle_string = TLEs["data"][i]
+        else: 
+            break
+
+    return tle_string
 
 def get_TLE_with_norad_id(norad_id):
     # URL for the API endpoint

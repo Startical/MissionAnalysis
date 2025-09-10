@@ -1,17 +1,17 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.patches import Polygon
-from geopy.distance import distance
-from geopy.point import Point
+
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from CommonTools.Constants import *
 import numpy as np
 
-def initialize_Earth_2D_plot():
+def initialize_Earth_2D_plot(fig = None, ax = None):
 
-    ## Print Earth Map
-    fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
+    if fig == None:
+        ## Print Earth Map
+        fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
     
     # Add coastlines and borders
     ax.coastlines()
@@ -124,9 +124,9 @@ def plot_ground_station(ax, gs, theta, gs_color = [0,1,0]):
 
     return r1, r2
 
-def initialize_ground_track_plot(spacecraft):
+def initialize_ground_track_plot(spacecraft, fig = None, ax = None):
     
-    fig, ax = initialize_Earth_2D_plot()
+    fig, ax = initialize_Earth_2D_plot(fig, ax)
 
     ## Print satellite trajectory
     sc_h_long_lat_ts = spacecraft.get_position_h_long_lat()
