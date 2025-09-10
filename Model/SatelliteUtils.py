@@ -1,10 +1,14 @@
+from skyfield.api import EarthSatellite
+from OrbitTools.FrameTransformations import FrameTransformations as Frames
 from Model.Spacecraft import Spacecraft
-from tletools import TLE
+
 import numpy as np
 
 from CommonTools.Datelib import time_offset
 
 import requests
+
+from tletools import TLE
 
 
 def load_tle_from_file(filename, refDate, sat_id):
@@ -68,20 +72,32 @@ def tle2kepler(tle_string):
     spacecraft_id = tle_string.strip().splitlines()[0][2:]
     tle_lines = tle_string.strip().splitlines()[1:]  # skip the name line
     formatted_tle_lines = fix_tle_spacing(tle_lines)
+
+    sat = EarthSatellite(formatted_tle_lines[0], formatted_tle_lines[1], spacecraft_id)
+
+    epoch = sat.epoch.utc_iso()
+
+    kepler_elements_v = [Frames.semiMajorAxisFromMeanMotion(sat.model.no_kozai/60),
+                        sat.model.ecco,
+                        sat.model.inclo,
+                        sat.model.nodeo,
+                        sat.model.argpo,
+                        Frames.trueAnomalyFromMeanAnomaly(sat.model.mo,sat.model.ecco)]
+    
     tle = TLE.from_lines(spacecraft_id,*formatted_tle_lines)
     orbit = tle.to_orbit()
-
+    
     kepler_elements = orbit.classical()
-    epoch = tle.epoch.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    kepler_elements_v = [kepler_elements[0].value,
+    epoch2 = tle.epoch.strftime('%Y-%m-%dT%H:%M:%SZ')
+    
+    kepler_elements_v2 = [kepler_elements[0].value,
                         kepler_elements[1].value,
                         np.deg2rad(kepler_elements[2].value),
                         np.deg2rad(kepler_elements[3].value),
                         np.deg2rad(kepler_elements[4].value),
                         np.deg2rad(kepler_elements[5].value)]
 
-    return epoch, kepler_elements_v, tle.norad
+    return epoch, kepler_elements_v, sat.model.satnum
 
 def initialize_spacecraft_from_TLE(spacecraft_id, tle_string):
 

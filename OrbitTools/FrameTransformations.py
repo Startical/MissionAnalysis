@@ -1,7 +1,7 @@
 import numpy as np
 from datetime import datetime
 
-from CommonTools.Constants import EARTH_W
+from CommonTools.Constants import EARTH_W, EARTH_MU
 
 from astropy.time import Time
 
@@ -95,6 +95,18 @@ class FrameTransformations(object):
         while M-E+ecc*np.sin(E) > 1e-6:
             E = M + ecc*np.sin(E)
         return E
+
+    def trueAnomalyFromMeanAnomaly(M,ecc):
+        """This method calculates the true anomaly from the mean anomaly"""
+        E = FrameTransformations.eccentricAnomalyFromMeanAnomaly(M,ecc)
+        ta = FrameTransformations.trueAnomalyFromEccentricAnomaly(E,ecc)
+        return ta
+
+    def semiMajorAxisFromMeanMotion(n):
+        """This method calculates the semi-major axis from the mean motion (in rad/s)"""
+        a = (EARTH_MU/n**2)**(1/3)
+        return a
+
     def calculate_gmst(date):
 
         """
